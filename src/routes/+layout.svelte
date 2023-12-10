@@ -1,11 +1,11 @@
 <script lang="ts">
-	import '../app.postcss';
-	import { AppShell, AppBar } from '@skeletonlabs/skeleton';
+	import "../app.postcss"
+	import { AppShell, AppBar } from "@skeletonlabs/skeleton"
+	import { computePosition, autoUpdate, flip, shift, offset, arrow } from "@floating-ui/dom"
+	import { storePopup } from "@skeletonlabs/skeleton"
+	import { user } from "$lib/stores/auth"
 
-	// Floating UI for Popups
-	import { computePosition, autoUpdate, flip, shift, offset, arrow } from '@floating-ui/dom';
-	import { storePopup } from '@skeletonlabs/skeleton';
-	storePopup.set({ computePosition, autoUpdate, flip, shift, offset, arrow });
+	storePopup.set({ computePosition, autoUpdate, flip, shift, offset, arrow })
 </script>
 
 <!-- App Shell -->
@@ -14,26 +14,22 @@
 		<!-- App Bar -->
 		<AppBar>
 			<svelte:fragment slot="lead">
-				<strong class="text-xl uppercase">Calendshare</strong>
+				<strong class="text-xl uppercase">Calendshare {$user ? $user.email : "NULL"}</strong>
 			</svelte:fragment>
 			<svelte:fragment slot="trail">
-				<a class="btn btn-sm variant-ghost-surface" href="/#" rel="noreferrer"> Log In </a>
-				<!-- <a
-					class="btn btn-sm variant-ghost-surface"
-					href="https://twitter.com/SkeletonUI"
-					target="_blank"
-					rel="noreferrer"
-				>
-					Twitter
-				</a>
-				<a
-					class="btn btn-sm variant-ghost-surface"
-					href="https://github.com/skeletonlabs/skeleton"
-					target="_blank"
-					rel="noreferrer"
-				>
-					GitHub
-				</a> -->
+				{#if !$user}
+					<a class="btn btn-sm variant-ghost-surface" href="/login" rel="noreferrer">Log In</a>
+				{:else}
+					<a class="btn btn-sm variant-ghost-surface" href="/new" rel="noreferrer">
+						New Calendar
+					</a>
+					<a class="btn btn-sm variant-ghost-surface" href="/dashboard" rel="noreferrer">
+						Dashboard
+					</a>
+					<form action="/login?/logout" method="POST">
+						<button class="btn btn-sm variant-ghost-surface">Log Out</button>
+					</form>
+				{/if}
 			</svelte:fragment>
 		</AppBar>
 	</svelte:fragment>
