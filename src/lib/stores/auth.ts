@@ -1,11 +1,10 @@
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from "firebase/auth"
 import { writable } from "svelte/store"
-import { auth } from "../firebase/client"
 import validate from "$lib/calendshare/utils/validate"
 import type { UserData } from "$lib/calendshare/db/collections/CalendshareUsers"
 import { browser } from "$app/environment"
-import crypto from "crypto"
 import db from "$lib/calendshare/db"
+import { auth } from "$lib/client/firebase"
 
 export async function validateAndCreateUser(email: string, password: string) {
 	validate.email(email?.toString())
@@ -30,12 +29,15 @@ export async function signOut() {
 	return auth.signOut()
 }
 
-export const user = writable<UserData | null>({
-	uid: "0039965",
-	email: "bouharri@nmu.edu",
-	firstName: "Harrison",
-	lastName: "bouche"
-})
+export const user = writable<UserData | null>(
+	// {
+	//     uid: "0039965",
+	//     email: "bouharri@nmu.edu",
+	//     firstName: "Harrison",
+	//     lastName: "Bouche"
+	// }
+	null
+)
 
 function generateString(length: number) {
 	const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
@@ -49,7 +51,7 @@ function generateString(length: number) {
 	return result
 }
 
-export function generateGuestUser({
+export async function generateGuestUser({
 	firstName,
 	lastName
 }: {
@@ -57,21 +59,29 @@ export function generateGuestUser({
 	lastName: string
 }) {
 	const uid = generateString(16)
-	db.user.set({
+	await db.user.set({
 		uid: uid,
 		email: "guest",
 		firstName,
 		lastName
 	})
 
-	user.set({
-		uid: uid,
-		email: "guest",
-		firstName,
-		lastName
-	})
+	await loginAsGuest(uid)
+}
+
+export async function loginAsGuest(guestId: string) {
+	const guest = await db.user.retrieveOne(guestId)
+	if (guest) {
+		user.set(guest)
+	}
 }
 
 if (browser) {
 	document.cookie = "uid=00399965; SameSite=Lax"
+	db.user.set({
+		uid: "0039965",
+		email: "bouharri@nmu.edu",
+		firstName: "Harrison",
+		lastName: "Bouche"
+	})
 }

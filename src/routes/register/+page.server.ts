@@ -17,16 +17,11 @@ export const actions: import("./$types").Actions = {
 			fail(400, { error: "Missing required fields" })
 		}
 
-		const user = await validateAndCreateUser(email!.toString(), password!.toString())
-
-		// Save user details to DB
-		const newUser = new CalendshareUser(user!.uid, firstName!.toString(), lastName!.toString())
-		await newUser.save()
-
-		// Validate user saved to DB
-		const userFromDBSnapshot = await getDoc(doc(firestore, "users", newUser.uid))
-		if (!userFromDBSnapshot.exists()) fail(500, { error: "User not saved to DB" })
-
-		throw redirect(303, "/dashboard")
+		return {
+			firstName,
+			lastName,
+			email,
+			password
+		}
 	}
 }

@@ -6,7 +6,7 @@ import type { User } from "firebase/auth"
 
 declare namespace App {
 	interface Locals {
-		user: User
+		user: UserData
 	}
 	// interface PageData {}
 	// interface Error {}

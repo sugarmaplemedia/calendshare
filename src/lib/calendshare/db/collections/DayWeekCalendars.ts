@@ -1,15 +1,18 @@
 import type { Day, HourRange } from "./time"
 import db from ".."
+import type { UserData } from "./CalendshareUsers"
 
 export type DayWeekCalendarData = {
 	name?: string
 	description?: string
+	ownerId?: string
 	users: Array<DayWeekCalendarUserData>
 	options: DayWeekCalendarOptions
 }
 
 export type DayWeekCalendarUserData = {
 	uid: string
+	color: string
 	data: Record<Day, HourStatus[]>
 }
 
@@ -37,10 +40,8 @@ export class DayWeekCalendar {
 		days: DayOptions
 		hours: HourOptions
 	}
-	users: Array<{
-		uid: string
-		data: Record<Day, HourStatus[]>
-	}> = []
+	ownerId?: string
+	users: Array<DayWeekCalendarUserData> = []
 	days!: Day[]
 	hours!: HourRange
 
@@ -80,21 +81,29 @@ export class DayWeekCalendar {
 	setHours(template: HourOptions, customHours?: HourRange) {
 		switch (template) {
 			case "all":
+				this.template.hours = "all"
 				this.hours = { min: 0, max: 23 }
 				break
 			case "business":
+				this.template.hours = "business"
 				this.hours = { min: 9, max: 17 }
 				break
 			case "custom":
+				this.template.hours = "custom"
 				this.hours = customHours!
 				break
 		}
 	}
 
 	addUser(userId: string) {
+		if (this.users.length == 0) {
+			this.ownerId = userId
+		}
+
 		if (!this.users.find((user) => user.uid == userId)) {
 			this.users.push({
 				uid: userId,
+				color: "#" + Math.floor(Math.random() * 16777215).toString(16),
 				data: {
 					monday: [],
 					tuesday: [],
@@ -118,22 +127,38 @@ export class DayWeekCalendar {
 		await db.calendar.set(this.id!, this.toData()).then(() => {})
 	}
 
-	async syncHourForDayForUser(userId: string, day: Day, hour: number) {
+	async mapUsersToData() {
+		const users: UserData[] = []
+		for (const user of this.users) {
+			users.push(await db.user.retrieveOne(user.uid))
+		}
+
+		return users
+	}
+
+	async syncHourForDayForUser(
+		userId: string,
+		day: Day,
+		hour: number,
+		status?: "available" | "unavailable"
+	) {
 		this.addUser(userId)
 
 		const hoursForDayForUser = this.users.find((user) => user.uid == userId)?.data[day]
 		const hourStatusIndex = hoursForDayForUser?.findIndex((hourStatus) => hourStatus.hour == hour)
 
-		if (typeof hourStatusIndex == "number" && hourStatusIndex != -1) {
+		if (
+			typeof hourStatusIndex == "number" &&
+			hourStatusIndex != -1 &&
+			(!status || status == "unavailable")
+		) {
 			hoursForDayForUser?.splice(hourStatusIndex, 1)
-		} else {
+		} else if (!status || status == "available") {
 			hoursForDayForUser?.push({
 				hour,
 				status: "available"
 			})
 		}
-
-		console.log(this.users)
 
 		this.save()
 	}
@@ -142,6 +167,7 @@ export class DayWeekCalendar {
 		return {
 			name: this.name ?? "",
 			description: this.description ?? "",
+			ownerId: this.ownerId ?? "",
 			users: this.users,
 			options: {
 				id: this.id,
@@ -169,6 +195,7 @@ export class DayWeekCalendar {
 		const calendar = new DayWeekCalendar(calendarData.options)
 		calendar.name = calendarData.name
 		calendar.description = calendarData.description
+		calendar.ownerId = calendarData.ownerId
 		calendar.users = calendarData.users
 
 		return calendar

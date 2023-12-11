@@ -2,14 +2,11 @@
 	import { getContext } from "svelte"
 	import type { DayWeekCalendarContext } from "./DayWeekCalendarStateTypes"
 	import type { DayOptions, HourOptions } from "../db/collections/DayWeekCalendars"
-
 	const { store: state } = getContext<DayWeekCalendarContext>("dayWeekCalendarState")
 
 	function saveState() {
 		$state.calendar?.save()
 	}
-
-	let dummyVal: string = ""
 
 	function handleSelectDayType(dayType: string) {
 		state.update((previousState) => {

@@ -14,6 +14,7 @@
 	} from "@skeletonlabs/skeleton"
 	import DayWeekCalendarUsers from "$lib/calendshare/core/DayWeekCalendarUsers.svelte"
 	import DayWeekCalendarShare from "$lib/calendshare/core/DayWeekCalendarShare.svelte"
+	import db from "$lib/calendshare/db"
 
 	export let data: PageData
 
@@ -28,13 +29,25 @@
 	}
 
 	const modalStore = getModalStore()
-	function handleGuestLogin() {
-		const modal: ModalSettings = {
-			type: "component",
-			component: "dayWeekCalendarGuestLogin"
-		}
 
-		modalStore.trigger(modal)
+	function handleLogin() {
+		modalStore.trigger({
+			type: "component",
+			component: "loginModal"
+		})
+	}
+
+	function handleGuestLogin() {
+		modalStore.trigger({
+			type: "component",
+			component: "dayWeekCalendarGuestLogin",
+			meta: { calendarId: data.calendar_id }
+		})
+	}
+
+	async function userIsCalendarOwner() {
+		const calendar = await db.calendar.retrieveOne(data.calendar_id)
+		return calendar.ownerId == $user?.uid
 	}
 </script>
 
@@ -50,16 +63,20 @@
 						<svelte:fragment slot="summary">Calendar Users</svelte:fragment>
 						<DayWeekCalendarUsers slot="content" />
 					</AccordionItem>
-					<AccordionItem open>
-						<svelte:fragment slot="summary">Calendar Options</svelte:fragment>
-						<DayWeekCalendarOptions slot="content" />
-					</AccordionItem>
+					{#await userIsCalendarOwner() then isOwner}
+						{#if isOwner}
+							<AccordionItem open>
+								<svelte:fragment slot="summary">Calendar Options</svelte:fragment>
+								<DayWeekCalendarOptions slot="content" />
+							</AccordionItem>
+						{/if}
+					{/await}
 				</Accordion>
 				<div class="grid grid-flow-col gap-2">
 					{#if !$user}
 						<DayWeekCalendarShare />
 					{:else}
-						<a href="/login" class="btn variant-ghost-surface">Login</a>
+						<button on:click={handleLogin} class="btn variant-ghost-surface">Login</button>
 						<button on:click={handleGuestLogin} class="btn variant-ghost-surface">
 							Guest Login
 						</button>
@@ -67,7 +84,7 @@
 				</div>
 			</div>
 
-			<div class="-rotate-y-12 -rotate-x-12">
+			<div class="-rotate-y-12 translate-y-2.5 -rotate-x-12 flex flex-col items-start">
 				<DayWeekCalendarSelector />
 			</div>
 		</div>

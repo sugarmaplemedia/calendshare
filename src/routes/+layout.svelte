@@ -6,12 +6,27 @@
 	import { initializeStores } from "@skeletonlabs/skeleton"
 	import { user } from "$lib/stores/auth"
 	import DayWeekCalendarGuestLogin from "$lib/calendshare/core/DayWeekCalendarGuestLogin.svelte"
+	import LoginModal from "$lib/calendshare/auth/components/LoginModal.svelte"
+	import type { LayoutData } from "./$types"
+	import { initializeFirebase } from "$lib/client/firebase"
+	import { browser } from "$app/environment"
+
+	export let data: LayoutData
+
+	if (browser) {
+		try {
+			initializeFirebase()
+		} catch (ex) {
+			console.error(ex)
+		}
+	}
 
 	storePopup.set({ computePosition, autoUpdate, flip, shift, offset, arrow })
 
 	initializeStores()
 	const modalRegistry: Record<string, ModalComponent> = {
-		dayWeekCalendarGuestLogin: { ref: DayWeekCalendarGuestLogin }
+		dayWeekCalendarGuestLogin: { ref: DayWeekCalendarGuestLogin },
+		loginModal: { ref: LoginModal }
 	}
 </script>
 

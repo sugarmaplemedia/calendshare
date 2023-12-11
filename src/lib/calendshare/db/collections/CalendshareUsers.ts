@@ -33,12 +33,13 @@ export class CalendshareUser {
 	toFirestore(): UserData {
 		return {
 			uid: this.uid,
+			email: "",
 			firstName: this.firstName,
 			lastName: this.lastName
 		}
 	}
 
 	async save() {
-		await db.user.add(this.toFirestore())
+		await db.user.set(this.toFirestore())
 	}
 }
