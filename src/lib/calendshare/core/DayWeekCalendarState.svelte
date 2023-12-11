@@ -16,6 +16,12 @@
 		activeUsers: [activeUser]
 	})
 
+	$: activeUser,
+		calendarStore.update((previousState) => {
+			previousState.currentUser = activeUser
+			return previousState
+		})
+
 	async function loadCalendar() {
 		const calendar = await DayWeekCalendar.getFromId(calendarId)
 		calendarStore.update((previousState) => {
@@ -33,8 +39,6 @@
 	})
 
 	function syncHourForDay(day: Day, hour: number) {
-		$calendarStore.calendar?.addUser($calendarStore.currentUser.uid)
-
 		calendarStore.update((previousState) => {
 			previousState.calendar?.syncHourForDayForUser(previousState.currentUser.uid, day, hour)
 

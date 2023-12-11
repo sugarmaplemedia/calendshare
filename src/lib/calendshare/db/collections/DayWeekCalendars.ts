@@ -4,11 +4,13 @@ import db from ".."
 export type DayWeekCalendarData = {
 	name?: string
 	description?: string
-	users: Array<{
-		uid: string
-		data: Record<Day, HourStatus[]>
-	}>
+	users: Array<DayWeekCalendarUserData>
 	options: DayWeekCalendarOptions
+}
+
+export type DayWeekCalendarUserData = {
+	uid: string
+	data: Record<Day, HourStatus[]>
 }
 
 export type HourStatus = {
@@ -57,14 +59,19 @@ export class DayWeekCalendar {
 	setDays(template: DayOptions, customDays?: Day[]) {
 		switch (template) {
 			case "all":
+				this.template.days = "all"
 				this.days = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]
 				break
 			case "week":
+				this.template.days = "week"
 				this.days = ["monday", "tuesday", "wednesday", "thursday", "friday"]
 				break
 			case "weekend":
+				this.template.days = "weekend"
 				this.days = ["saturday", "sunday"]
+				break
 			case "custom":
+				this.template.days = "custom"
 				this.days = customDays!
 				break
 		}
@@ -108,21 +115,14 @@ export class DayWeekCalendar {
 	}
 
 	async save() {
-		console.log("I'm saving!")
-
-		await db.calendar.set(this.id!, this.toData()).then(() => {
-			console.log("I saved!")
-		})
+		await db.calendar.set(this.id!, this.toData()).then(() => {})
 	}
 
 	async syncHourForDayForUser(userId: string, day: Day, hour: number) {
-		console.log("this.users", this.users)
+		this.addUser(userId)
 
-		const hoursForDayForUser = this.users.find((user) => (user.uid = userId))?.data[day]
-		console.log("hoursForDayForUser", hoursForDayForUser)
-
+		const hoursForDayForUser = this.users.find((user) => user.uid == userId)?.data[day]
 		const hourStatusIndex = hoursForDayForUser?.findIndex((hourStatus) => hourStatus.hour == hour)
-		console.log("hourStatusIndex", hourStatusIndex)
 
 		if (typeof hourStatusIndex == "number" && hourStatusIndex != -1) {
 			hoursForDayForUser?.splice(hourStatusIndex, 1)
@@ -132,6 +132,8 @@ export class DayWeekCalendar {
 				status: "available"
 			})
 		}
+
+		console.log(this.users)
 
 		this.save()
 	}

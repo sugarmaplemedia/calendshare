@@ -1,12 +1,21 @@
 <script lang="ts">
 	import "../app.postcss"
-	import { AppShell, AppBar } from "@skeletonlabs/skeleton"
+	import { AppShell, AppBar, Modal, type ModalComponent } from "@skeletonlabs/skeleton"
 	import { computePosition, autoUpdate, flip, shift, offset, arrow } from "@floating-ui/dom"
 	import { storePopup } from "@skeletonlabs/skeleton"
+	import { initializeStores } from "@skeletonlabs/skeleton"
 	import { user } from "$lib/stores/auth"
+	import DayWeekCalendarGuestLogin from "$lib/calendshare/core/DayWeekCalendarGuestLogin.svelte"
 
 	storePopup.set({ computePosition, autoUpdate, flip, shift, offset, arrow })
+
+	initializeStores()
+	const modalRegistry: Record<string, ModalComponent> = {
+		dayWeekCalendarGuestLogin: { ref: DayWeekCalendarGuestLogin }
+	}
 </script>
+
+<Modal components={modalRegistry} />
 
 <!-- App Shell -->
 <AppShell>

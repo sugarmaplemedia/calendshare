@@ -12,8 +12,6 @@
 		syncHourForDay
 	} = getContext<DayWeekCalendarContext>("dayWeekCalendarState")
 
-	console.log($otherUserData)
-
 	function handleSelectHour(day: Day, hour: number) {
 		syncHourForDay(day, hour)
 	}
@@ -21,11 +19,11 @@
 	// TODO: add modes (toggle, add, remove)
 </script>
 
-<div class="grid grid-cols-8 gap-1 card p-4">
+<div class="grid grid-flow-col gap-2 card p-4">
 	<div class="grid justify-self-end gap-2 -mt-0.5">
 		<div class="h-8"></div>
 		{#each $state.calendar?.convertHourRangeToHours() ?? [] as hour}
-			<div class="h-8">
+			<div class="h-8 w-20">
 				<p>{hourNumberToString(hour, { militaryTime: false })}</p>
 			</div>
 		{/each}
@@ -36,7 +34,9 @@
 			<div class="grid gap-2">
 				{#each $state.calendar?.convertHourRangeToHours() ?? [] as hour (`${day}:${hour}`)}
 					<button
-						use:clickOrDrag={() => handleSelectHour(day, hour)}
+						use:clickOrDrag={() => {
+							handleSelectHour(day, hour)
+						}}
 						class="w-20 bg-white h-8 grid-flow-row relative rounded-md overflow-hidden"
 					>
 						{#if $activeUserData?.data[day].find((hourStatus) => hourStatus.hour == hour)}

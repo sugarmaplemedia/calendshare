@@ -13,6 +13,7 @@ export default {
 		extend: {}
 	},
 	plugins: [
+		require("tailwindcss-3d"),
 		forms,
 		skeleton({
 			themes: {
