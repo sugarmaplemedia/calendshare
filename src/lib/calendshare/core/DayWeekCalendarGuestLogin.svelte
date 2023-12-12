@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { enhance } from "$app/forms"
-	import { generateGuestUser } from "$lib/stores/auth"
+	import { generateGuestUser, loginAsGuest } from "$lib/stores/auth"
 	import { RadioGroup, RadioItem, getModalStore } from "@skeletonlabs/skeleton"
 	import { DayWeekCalendar } from "../db/collections/DayWeekCalendars"
 	import type { UserData } from "../db/collections/CalendshareUsers"
@@ -22,8 +22,13 @@
 		modalStore.close()
 	}
 
+	let selectedGuest: UserData
 	async function handleGuestLogin() {
-		await generateGuestUser({ firstName, lastName })
+		if (guestLoginType == "existing") {
+			await loginAsGuest(selectedGuest.uid)
+		} else {
+			await generateGuestUser({ firstName, lastName })
+		}
 		modalStore.close()
 	}
 </script>
@@ -63,9 +68,9 @@
 		</label>
 	{:else if guestLoginType == "existing"}
 		<label for="guest-existing">Select Existing Guest</label>
-		<select id="guest-existing" class="select">
+		<select id="guest-existing" class="select" bind:value={selectedGuest}>
 			{#each existingGuests as guest}
-				<option value={guest.uid}>{guest.firstName} {guest.lastName}</option>
+				<option value={guest}>{guest.firstName} {guest.lastName}</option>
 			{/each}
 		</select>
 	{/if}
