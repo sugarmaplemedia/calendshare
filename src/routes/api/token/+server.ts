@@ -1,4 +1,4 @@
-import { json, type RequestHandler } from "@sveltejs/kit"
+import type { RequestHandler } from "@sveltejs/kit"
 
 export const POST: RequestHandler = async ({ request, cookies }) => {
 	const payload = await request.json()
@@ -12,5 +12,5 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
 		cookies.delete("token", { path: "/" })
 	}
 
-	return json({})
+	return new Response()
 }

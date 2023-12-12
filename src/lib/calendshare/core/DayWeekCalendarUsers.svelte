@@ -53,7 +53,7 @@
 			<li
 				style="border-left: 8px solid {$state.calendar?.users.find(
 					(listUser) => listUser.uid == loadedUser.uid
-				)?.color}80;"
+				)?.color};"
 				class="card p-2 pl-2 font-medium flex justify-between items-center drop-shadow variant-filled"
 			>
 				<span class="p-2">{loadedUser.firstName} {loadedUser.lastName}</span>

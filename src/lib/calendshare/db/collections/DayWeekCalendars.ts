@@ -100,10 +100,15 @@ export class DayWeekCalendar {
 			this.ownerId = userId
 		}
 
+		function selectColor(num: number) {
+			const hue = num * 137.508 // use golden angle approximation
+			return `hsl(${hue},50%,75%)`
+		}
+
 		if (!this.users.find((user) => user.uid == userId)) {
 			this.users.push({
 				uid: userId,
-				color: "#" + Math.floor(Math.random() * 16777215).toString(16),
+				color: selectColor(Math.random() * 1000),
 				data: {
 					monday: [],
 					tuesday: [],

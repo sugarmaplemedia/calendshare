@@ -39,6 +39,11 @@ export class CalendshareUser {
 		}
 	}
 
+	static async getFromId(uid: string): Promise<UserData> {
+		const user = await db.user.retrieveOne(uid)
+		return user
+	}
+
 	async save() {
 		await db.user.set(this.toFirestore())
 	}

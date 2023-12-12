@@ -4,14 +4,9 @@
 	import { computePosition, autoUpdate, flip, shift, offset, arrow } from "@floating-ui/dom"
 	import { storePopup } from "@skeletonlabs/skeleton"
 	import { initializeStores } from "@skeletonlabs/skeleton"
-	import { user } from "$lib/stores/auth"
 	import DayWeekCalendarGuestLogin from "$lib/calendshare/core/DayWeekCalendarGuestLogin.svelte"
-	import LoginModal from "$lib/calendshare/auth/components/LoginModal.svelte"
-	import type { LayoutData } from "./$types"
 	import { initializeFirebase } from "$lib/client/firebase"
 	import { browser } from "$app/environment"
-
-	export let data: LayoutData
 
 	if (browser) {
 		try {
@@ -25,8 +20,7 @@
 
 	initializeStores()
 	const modalRegistry: Record<string, ModalComponent> = {
-		dayWeekCalendarGuestLogin: { ref: DayWeekCalendarGuestLogin },
-		loginModal: { ref: LoginModal }
+		dayWeekCalendarGuestLogin: { ref: DayWeekCalendarGuestLogin }
 	}
 </script>
 
@@ -38,22 +32,12 @@
 		<!-- App Bar -->
 		<AppBar>
 			<svelte:fragment slot="lead">
-				<strong class="text-xl uppercase">Calendshare {$user ? $user.email : "NULL"}</strong>
+				<a href="/">
+					<strong class="text-xl uppercase">Calendshare</strong>
+				</a>
 			</svelte:fragment>
 			<svelte:fragment slot="trail">
-				{#if !$user}
-					<a class="btn btn-sm variant-ghost-surface" href="/login" rel="noreferrer">Log In</a>
-				{:else}
-					<a class="btn btn-sm variant-ghost-surface" href="/new" rel="noreferrer">
-						New Calendar
-					</a>
-					<a class="btn btn-sm variant-ghost-surface" href="/dashboard" rel="noreferrer">
-						Dashboard
-					</a>
-					<form action="/login?/logout" method="POST">
-						<button class="btn btn-sm variant-ghost-surface">Log Out</button>
-					</form>
-				{/if}
+				<a class="btn btn-sm variant-ghost-surface" href="/new" rel="noreferrer"> New Calendar </a>
 			</svelte:fragment>
 		</AppBar>
 	</svelte:fragment>

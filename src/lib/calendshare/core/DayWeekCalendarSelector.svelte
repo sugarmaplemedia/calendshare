@@ -1,11 +1,14 @@
 <script lang="ts">
-	import { getContext } from "svelte"
+	import { createEventDispatcher, getContext } from "svelte"
 	import { clickOrDrag } from "./actions"
 	import type { Day } from "../db/collections/time"
 	import type { DayWeekCalendarContext } from "./DayWeekCalendarStateTypes"
 	import { hourNumberToString } from "../utils/timeConvert"
 	import { popup, type PopupSettings } from "@skeletonlabs/skeleton"
 	import { fade } from "svelte/transition"
+	import { user } from "$lib/stores/auth"
+
+	const dispatch = createEventDispatcher()
 
 	const {
 		store: state,
@@ -15,12 +18,16 @@
 	} = getContext<DayWeekCalendarContext>("dayWeekCalendarState")
 
 	function handleSelectHour(day: Day, hour: number) {
-		if (tool == "toggle") {
-			syncHourForDay(day, hour)
-		} else if (tool == "add") {
-			syncHourForDay(day, hour, "available")
-		} else if (tool == "remove") {
-			syncHourForDay(day, hour, "unavailable")
+		if ($user || tool == "view") {
+			if (tool == "toggle") {
+				syncHourForDay(day, hour)
+			} else if (tool == "add") {
+				syncHourForDay(day, hour, "available")
+			} else if (tool == "remove") {
+				syncHourForDay(day, hour, "unavailable")
+			}
+		} else {
+			dispatch("selectWithoutUser")
 		}
 	}
 
@@ -60,7 +67,7 @@
 	}
 </script>
 
-<div class="grid grid-flow-col gap-2 card p-4 min-w-[416px]">
+<div class="grid grid-flow-col gap-2 card p-4 w-full xl:min-w-[416px]">
 	<div class="grid justify-self-end gap-2 -mt-0.5">
 		<div class="h-8"></div>
 		{#each $state.calendar?.convertHourRangeToHours() ?? [] as hour}
@@ -71,7 +78,7 @@
 	</div>
 	{#each $state.calendar?.days ?? [] as day (day)}
 		<div class="flex flex-col gap-2 items-center">
-			<p class="">{day}</p>
+			<p class="">{day.slice(0, 3)}</p>
 			<div class="grid gap-2">
 				{#each $state.calendar?.convertHourRangeToHours() ?? [] as hour (`${day}:${hour}`)}
 					<button
@@ -79,13 +86,13 @@
 							handleSelectHour(day, hour)
 						}}
 						use:popup={getAvailabilityPopup(`${day}:${hour}`)}
-						class="w-24 [&>*]:pointer-events-none bg-white h-8 grid-flow-row relative rounded-md overflow-hidden"
+						class="w-8 sm:w-12 md:w-16 lg:w-20 xl:w-24 [&>*]:pointer-events-none bg-white h-8 grid-flow-row relative rounded-md overflow-hidden"
 					>
 						{#if $activeUserData?.data[day].find((hourStatus) => hourStatus.hour == hour) && !$state.invisibleUsersById.includes($activeUserData.uid)}
 							<span
 								transition:fade={{ duration: 100 }}
 								style={`background-color: ${$activeUserData.color};`}
-								class="opacity-50 block w-full h-full"
+								class="opacity-70 block w-full h-full"
 							></span>
 						{/if}
 						{#each $otherUserData ?? [] as anotherUsersData}
@@ -93,7 +100,7 @@
 								<span
 									transition:fade={{ duration: 100 }}
 									style={`background-color: ${anotherUsersData.color};`}
-									class=" absolute opacity-50 block w-full h-full top-0"
+									class=" absolute opacity-70 block w-full h-full top-0"
 								></span>
 							{/if}
 						{/each}

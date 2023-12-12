@@ -7,7 +7,7 @@ import {
 	getDocs,
 	setDoc
 } from "firebase/firestore/lite"
-import { firestore as db } from "$lib/firebase/client"
+import { db } from "$lib/client/firebase"
 import { CalendshareUser, type UserData } from "./collections/CalendshareUsers"
 import type { DayWeekCalendarData } from "./collections/DayWeekCalendars"
 
@@ -54,7 +54,7 @@ export default {
 	},
 	calendar: {
 		retrieveOne: async (calendarId: string) => await retrieve("dw-calendars", calendarId),
-		retrieveAll: async () => await retrieveAll("dw-calendars"),
+		retrieveAll: async () => (await retrieveAll("dw-calendars")) as DayWeekCalendarData[],
 		set: async (calendarId: string, calendar: DayWeekCalendarData) =>
 			await add("dw-calendars", calendar, calendarId),
 		remove: async (calendarId: string) => remove("dw-calendars", calendarId),

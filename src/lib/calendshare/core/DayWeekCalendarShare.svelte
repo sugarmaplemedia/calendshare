@@ -21,13 +21,18 @@
 
 	const copyLinkPopup: PopupSettings = {
 		event: "click",
-		target: "popupClick",
+		target: "copyPopup",
+		placement: "bottom"
+	}
+	const qrLinkPopup: PopupSettings = {
+		event: "hover",
+		target: "qrPopup",
 		placement: "bottom"
 	}
 </script>
 
 {#if typeof navigator.share === "function"}
-	<button on:click={handleShare} class="btn variant-ghost-surface">
+	<button on:click={handleShare} class="btn variant-ghost-surface grow">
 		<span class="w-4 h-4 block">
 			<svg xmlns="http://www.w3.org/2000/svg" class="icon" viewBox="0 0 512 512">
 				<path
@@ -43,7 +48,7 @@
 		<span>Share</span>
 	</button>
 {/if}
-<button use:popup={copyLinkPopup} on:click={handleCopyLink} class="btn variant-ghost-surface">
+<button use:popup={copyLinkPopup} on:click={handleCopyLink} class="btn variant-ghost-surface grow">
 	<span class="w-4 h-4 block">
 		<svg xmlns="http://www.w3.org/2000/svg" class="ionicon" viewBox="0 0 512 512">
 			<rect
@@ -70,7 +75,80 @@
 	</span>
 	<span>Copy Link</span>
 </button>
-<div class="card p-4 variant-filled-primary rounded-lg" data-popup="popupClick">
+<div class="card p-4 variant-filled-primary rounded-lg" data-popup="copyPopup">
 	<p>Copied!</p>
+	<div class="arrow variant-filled-primary" />
+</div>
+<a
+	use:popup={qrLinkPopup}
+	href={`https://quickchart.io/qr?text=https%3A%2F%2Fcalendshare.app%2Fcalendar%2F/${$state.id}&size=512`}
+	target="_blank"
+	class="btn variant-ghost-surface w-fit"
+>
+	<span class="w-4 h-4 block fill-primary-50 pointer-events-none">
+		<svg xmlns="http://www.w3.org/2000/svg" class="ionicon" viewBox="0 0 512 512"
+			><rect x="336" y="336" width="80" height="80" rx="8" ry="8" /><rect
+				x="272"
+				y="272"
+				width="64"
+				height="64"
+				rx="8"
+				ry="8"
+			/><rect x="416" y="416" width="64" height="64" rx="8" ry="8" /><rect
+				x="432"
+				y="272"
+				width="48"
+				height="48"
+				rx="8"
+				ry="8"
+			/><rect x="272" y="432" width="48" height="48" rx="8" ry="8" /><rect
+				x="336"
+				y="96"
+				width="80"
+				height="80"
+				rx="8"
+				ry="8"
+			/><rect
+				x="288"
+				y="48"
+				width="176"
+				height="176"
+				rx="16"
+				ry="16"
+				fill="none"
+				stroke="currentColor"
+				stroke-linecap="round"
+				stroke-linejoin="round"
+				stroke-width="32"
+			/><rect x="96" y="96" width="80" height="80" rx="8" ry="8" /><rect
+				x="48"
+				y="48"
+				width="176"
+				height="176"
+				rx="16"
+				ry="16"
+				fill="none"
+				stroke="currentColor"
+				stroke-linecap="round"
+				stroke-linejoin="round"
+				stroke-width="32"
+			/><rect x="96" y="336" width="80" height="80" rx="8" ry="8" /><rect
+				x="48"
+				y="288"
+				width="176"
+				height="176"
+				rx="16"
+				ry="16"
+				fill="none"
+				stroke="currentColor"
+				stroke-linecap="round"
+				stroke-linejoin="round"
+				stroke-width="32"
+			/></svg
+		>
+	</span>
+</a>
+<div class="card p-4 variant-filled-primary rounded-lg" data-popup="qrPopup">
+	<p>Get QR Code</p>
 	<div class="arrow variant-filled-primary" />
 </div>

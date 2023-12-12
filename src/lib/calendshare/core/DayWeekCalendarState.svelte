@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { setContext } from "svelte"
+	import { createEventDispatcher, setContext } from "svelte"
 	import { derived, writable } from "svelte/store"
 	import { DayWeekCalendar, type DayWeekCalendarData } from "../db/collections/DayWeekCalendars"
 	import type { UserData } from "../db/collections/CalendshareUsers"
@@ -9,18 +9,29 @@
 	import { ConicGradient, type ConicStop } from "@skeletonlabs/skeleton"
 
 	export let calendarId: string
-	export let activeUser: UserData
+	export let activeUser: UserData | null
+
+	const dispatch = createEventDispatcher()
 
 	const calendarStore: DayWeekCalendarStore = writable({
 		id: calendarId,
-		currentUser: activeUser,
-		activeUsers: [activeUser],
+		currentUser: activeUser!,
+		activeUsers: [activeUser!],
 		invisibleUsersById: []
 	})
 
 	$: activeUser,
 		calendarStore.update((previousState) => {
-			previousState.currentUser = activeUser
+			previousState.currentUser = activeUser!
+			if (previousState.calendar?.users.length == 0) {
+				previousState.calendar!.addUser(activeUser!.uid)
+				previousState.calendar!.save()
+			}
+
+			if (previousState.calendar?.ownerId == activeUser?.uid) {
+				dispatch("setOwner")
+			}
+
 			return previousState
 		})
 
@@ -28,16 +39,17 @@
 		const calendar = await DayWeekCalendar.getFromId(calendarId)
 		calendarStore.update((previousState) => {
 			previousState.calendar = calendar
+
 			return previousState
 		})
 	}
 
 	const activeUserData = derived(calendarStore, (storeData) => {
-		return storeData.calendar?.users.find((user) => user.uid == activeUser.uid)
+		return storeData.calendar?.users.find((user) => user.uid == activeUser?.uid)
 	})
 
 	const otherUserData = derived(calendarStore, (storeData) => {
-		return storeData.calendar?.users.filter((user) => user.uid != activeUser.uid) ?? []
+		return storeData.calendar?.users.filter((user) => user.uid != activeUser?.uid) ?? []
 	})
 
 	function toggleVisibilityForUser(uid: string) {
