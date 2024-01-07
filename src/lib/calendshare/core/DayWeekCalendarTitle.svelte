@@ -5,6 +5,10 @@
 	const { store: state } = getContext<DayWeekCalendarContext>("dayWeekCalendarState")
 </script>
 
+<svelte:head>
+	<title>{$state.calendar?.name ? $state.calendar.name : "New Calendshare Calendar"}</title>
+</svelte:head>
+
 <header class="mb-6 flex flex-col gap-2">
 	<h1 class="text-left w-full block text-4xl font-black tracking-wide">
 		{$state.calendar?.name ? $state.calendar.name : "Calendshare Calendar"}
