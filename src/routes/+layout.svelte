@@ -5,19 +5,10 @@
 	import { storePopup } from "@skeletonlabs/skeleton"
 	import { initializeStores } from "@skeletonlabs/skeleton"
 	import DayWeekCalendarGuestLogin from "$lib/calendshare/core/DayWeekCalendarGuestLogin.svelte"
-	import { initializeFirebase } from "$lib/client/firebase"
-	import { browser } from "$app/environment"
 
-	if (browser) {
-		try {
-			initializeFirebase()
-		} catch (ex) {
-			console.error(ex)
-		}
-	}
+	// Modal setup
 
 	storePopup.set({ computePosition, autoUpdate, flip, shift, offset, arrow })
-
 	initializeStores()
 	const modalRegistry: Record<string, ModalComponent> = {
 		dayWeekCalendarGuestLogin: { ref: DayWeekCalendarGuestLogin }
