@@ -7,7 +7,6 @@ import {
 	getDocs,
 	setDoc
 } from "firebase/firestore/lite"
-import { db } from "$lib/client/firebase"
 import { CalendshareUser, type UserData } from "./collections/CalendshareUsers"
 import type { DayWeekCalendarData } from "./collections/DayWeekCalendars"
 
