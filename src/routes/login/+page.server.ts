@@ -4,6 +4,6 @@ export const load = async ({ locals: { supabase, getSession, drizzle } }) => {
 	const session = await getSession()
 
 	if (session) {
-		throw redirect(303, "/account")
+		redirect(303, "/account");
 	}
 }

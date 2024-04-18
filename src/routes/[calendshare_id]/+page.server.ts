@@ -6,7 +6,7 @@ export async function load({ locals: { getSession }, params }) {
 	const calendshare = await CalendshareClient.get(params.calendshare_id)
 
 	if (!calendshare) {
-		throw error(404)
+		error(404);
 	}
 
 	const session = await getSession()

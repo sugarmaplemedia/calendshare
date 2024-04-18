@@ -4,7 +4,7 @@ export async function GET({ fetch, url }) {
 	const guestId = url.searchParams.get("guestId")
 
 	if (!guestId) {
-		throw error(400, "You must provide a guest ID or be logged in.")
+		error(400, "You must provide a guest ID or be logged in.");
 	}
 
 	const newCalendshareRes = await fetch("/api/calendshare", {
@@ -16,10 +16,10 @@ export async function GET({ fetch, url }) {
 	})
 
 	if (!newCalendshareRes.ok) {
-		throw error(400, "Failed to create new calendshare")
+		error(400, "Failed to create new calendshare");
 	}
 
 	const { id: newCalendshareId } = await newCalendshareRes.json()
 
-	throw redirect(303, `/${newCalendshareId}`)
+	redirect(303, `/${newCalendshareId}`);
 }

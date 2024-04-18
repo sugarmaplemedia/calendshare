@@ -8,18 +8,18 @@ export async function POST({ locals: { drizzle, getSession }, request }) {
 	console.log("HIT GUEST", data)
 
 	if (session) {
-		throw error(400, "You are already a user.")
+		error(400, "You are already a user.");
 	}
 
 	const firstName = data.firstName
 	const lastName = data.lastName
 
 	if (!firstName && !lastName) {
-		throw error(400, "Please provide a first and last name.")
+		error(400, "Please provide a first and last name.");
 	} else if (!firstName || typeof firstName !== "string") {
-		throw error(400, "first name of type string is required.")
+		error(400, "first name of type string is required.");
 	} else if (!lastName || typeof lastName !== "string") {
-		throw error(400, "last name of type string is required.")
+		error(400, "last name of type string is required.");
 	}
 
 	const guest = (

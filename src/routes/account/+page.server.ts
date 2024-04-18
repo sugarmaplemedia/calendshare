@@ -4,7 +4,7 @@ export const load = async ({ locals: { supabase, getSession, drizzle } }) => {
 	const session = await getSession()
 
 	if (!session) {
-		throw redirect(303, "/")
+		redirect(303, "/");
 	}
 
 	const profiles = await drizzle.query.User.findFirst({
@@ -59,7 +59,7 @@ export const actions = {
 		const session = await getSession()
 		if (session) {
 			await supabase.auth.signOut()
-			throw redirect(303, "/")
+			redirect(303, "/");
 		}
 	}
 }

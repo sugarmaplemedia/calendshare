@@ -15,7 +15,7 @@ export async function POST({ locals: { getSession }, request }) {
 	const { guestId } = await request.json()
 
 	if (!session && !guestId) {
-		throw error(400, "You must either be logged in or supply a guest ID.")
+		error(400, "You must either be logged in or supply a guest ID.");
 	}
 
 	const newCalendshareId = session
@@ -32,7 +32,7 @@ export async function PUT({ locals: { drizzle }, request }) {
 	console.log("PUT Requested")
 
 	if (!dbCalendshare) {
-		throw error(400, "A calendshare of that ID does not exist.")
+		error(400, "A calendshare of that ID does not exist.");
 	}
 
 	const calendshareUpdates: CalendshareInsertValues = {
