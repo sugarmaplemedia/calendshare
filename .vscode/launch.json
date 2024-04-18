@@ -1,0 +1,35 @@
+{
+	"version": "0.2.0",
+	"configurations": [
+		{
+			"name": "Launch SvelteKit",
+			"request": "launch",
+			"runtimeArgs": ["run", "dev"],
+			"runtimeExecutable": "npm",
+			"skipFiles": ["<node_internals>/**"],
+			"type": "node",
+			"console": "internalConsole",
+			"serverReadyAction": {
+				"action": "openExternally",
+				"pattern": "Local: http://localhost:([0-9]+)",
+				"uriFormat": "http://localhost:%s"
+			}
+		},
+
+		{
+			"name": "Launch Supabase",
+			"request": "launch",
+			"runtimeArgs": ["supabase", "start"],
+			"runtimeExecutable": "npx",
+			"skipFiles": ["<node_internals>/**"],
+			"type": "node",
+			"console": "internalConsole"
+		}
+	],
+	"compounds": [
+		{
+			"name": "Both",
+			"configurations": ["Launch SvelteKit", "Launch Supabase"]
+		}
+	]
+}

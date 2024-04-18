@@ -1,33 +1,31 @@
 <script lang="ts">
-	import { createEventDispatcher, getContext } from "svelte"
-	import { clickOrDrag } from "./actions"
-	import type { Day } from "../db/collections/time"
-	import type { DayWeekCalendarContext } from "./DayWeekCalendarStateTypes"
+	import { getContext } from "svelte"
+	import { clickOrDrag } from "$lib/calendshare/svelte/actions"
 	import { hourNumberToString } from "$lib/utils/timeConvert"
 	import { popup, type PopupSettings } from "@skeletonlabs/skeleton"
 	import { fade } from "svelte/transition"
-	import { user } from "$lib/stores/auth"
+	import type { CalendshareContext } from "./CalendshareState.types"
+	import type { Calendshare } from "$lib/drizzle/schema"
 
-	const dispatch = createEventDispatcher()
+	const { state, activeUserRecord, updateRecordEntry } =
+		getContext<CalendshareContext>("CalendshareContext")
 
-	const {
-		store: state,
-		activeUserData,
-		otherUserData,
-		syncHourForDay
-	} = getContext<DayWeekCalendarContext>("dayWeekCalendarState")
+	function handleSelectHour(day: string, hour: number) {
+		console.log("Day, Hour:", day, hour)
 
-	function handleSelectHour(day: Day, hour: number) {
-		if ($user || tool == "view") {
+		if (tool == "view") {
+			return
+		}
+
+		if ($state.activeUser) {
 			if (tool == "toggle") {
-				syncHourForDay(day, hour)
+				updateRecordEntry(day, hour, "available", { mode: "toggle" })
 			} else if (tool == "add") {
-				syncHourForDay(day, hour, "available")
+				// syncHourForDay(day, hour, "available")
 			} else if (tool == "remove") {
-				syncHourForDay(day, hour, "unavailable")
+				// syncHourForDay(day, hour, "unavailable")
 			}
 		} else {
-			dispatch("selectWithoutUser")
 		}
 	}
 
@@ -37,12 +35,36 @@
 		placement: "bottom"
 	})
 
-	function usersAvailableAtHour(day: Day, hour: number) {
+	function getSelectorHours(calendshare: Calendshare) {
+		switch (calendshare.hoursTemplate) {
+			case "all_hours":
+				// 0:00 to 23:00
+				return Array.from({ length: 24 }, (_, i) => i)
+			case "business_hours":
+				// 8:00 to 16:00
+				return Array.from({ length: 10 }, (_, i) => i + 8)
+			case "custom":
+				return [] // TODO: implement
+		}
+	}
+
+	function getSelectorDays(calendshare: Calendshare) {
+		switch (calendshare.daysTemplate) {
+			case "all_week":
+				return ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+			case "business_days":
+				return ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
+			case "weekend_only":
+				return ["Saturday", "Sunday"]
+			case "custom":
+				return [] // TODO: implement
+		}
+	}
+
+	function usersAvailableAtHour(day: string, hour: number) {
 		return (
-			$state.calendar?.users.filter((calendarUser) => {
-				let existingHourStatus = calendarUser.data[day].find(
-					(hourStatus) => hourStatus.hour == hour
-				)
+			$state.calendshare.records.filter((record) => {
+				let existingHourStatus = record.entries.find((entry) => entry.hour == hour)
 				return existingHourStatus?.status == "available"
 			}) ?? []
 		)
@@ -70,17 +92,17 @@
 <div class="grid grid-flow-col gap-2 card p-4 w-full xl:min-w-[416px]">
 	<div class="grid justify-self-end gap-2 -mt-0.5">
 		<div class="h-8"></div>
-		{#each $state.calendar?.convertHourRangeToHours() ?? [] as hour}
+		{#each getSelectorHours($state.calendshare) as hour}
 			<div class="h-8 text-sm text-left w-20">
 				<p>{hourNumberToString(hour, { militaryTime: false })}</p>
 			</div>
 		{/each}
 	</div>
-	{#each $state.calendar?.days ?? [] as day (day)}
+	{#each getSelectorDays($state.calendshare) as day (day)}
 		<div class="flex flex-col gap-2 items-center">
 			<p class="">{day.slice(0, 3)}</p>
 			<div class="grid gap-2">
-				{#each $state.calendar?.convertHourRangeToHours() ?? [] as hour (`${day}:${hour}`)}
+				{#each getSelectorHours($state.calendshare) ?? [] as hour (`${day}:${hour}`)}
 					<button
 						use:clickOrDrag={() => {
 							handleSelectHour(day, hour)
@@ -88,18 +110,19 @@
 						use:popup={getAvailabilityPopup(`${day}:${hour}`)}
 						class="w-8 sm:w-12 md:w-16 lg:w-20 xl:w-24 [&>*]:pointer-events-none bg-white h-8 grid-flow-row relative rounded-md overflow-hidden"
 					>
-						{#if $activeUserData?.data[day].find((hourStatus) => hourStatus.hour == hour) && !$state.invisibleUsersById.includes($activeUserData.uid)}
+						{#if $activeUserRecord?.entries.find((entry) => entry.day.name == day && entry.hour == hour)}
 							<span
 								transition:fade={{ duration: 100 }}
-								style={`background-color: ${$activeUserData.color};`}
+								style={`background-color: ${$activeUserRecord.color};`}
 								class="opacity-70 block w-full h-full"
-							></span>
+							>
+							</span>
 						{/if}
-						{#each $otherUserData ?? [] as anotherUsersData}
-							{#if anotherUsersData.data[day].find((hourStatus) => hourStatus.hour == hour) && !$state.invisibleUsersById.includes(anotherUsersData.uid)}
+						{#each $state.calendshare.records as record}
+							{#if record.entries.find((entry) => entry.day.name == day && entry.hour == hour)}
 								<span
 									transition:fade={{ duration: 100 }}
-									style={`background-color: ${anotherUsersData.color};`}
+									style={`background-color: ${record.color};`}
 									class=" absolute opacity-70 block w-full h-full top-0"
 								></span>
 							{/if}
@@ -117,7 +140,7 @@
 									{ militaryTime: false }
 								)}
 							</h3>
-							{#if usersAvailableAtHour(day, hour).length == $state.calendar?.users.length}
+							{#if usersAvailableAtHour(day, hour).length == $state.calendshare.records.length}
 								<div
 									class="card border-2 border-primary-200 rounded-md text-sm variant-filled-success p-2 text-left"
 								>
@@ -129,8 +152,8 @@
 								>
 									<p class="font-bold uppercase">Available</p>
 									<ul class="list-disc ml-4">
-										{#each usersAvailableAtHour(day, hour) as availableUser}
-											<li>{availableUser.uid}</li>
+										{#each usersAvailableAtHour(day, hour) as { user: { firstName, lastName } }}
+											<li>{firstName} {lastName}</li>
 										{/each}
 									</ul>
 								</div>

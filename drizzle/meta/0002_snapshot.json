@@ -1,6 +1,6 @@
 {
-  "id": "42fb184c-523e-4f54-884b-2612313cefab",
-  "prevId": "00000000-0000-0000-0000-000000000000",
+  "id": "343473c2-41e2-41b0-b420-8d7cb49e3b38",
+  "prevId": "80d36268-ae41-4b6b-9ddd-afef6f8a6b99",
   "version": "5",
   "dialect": "pg",
   "tables": {
@@ -86,35 +86,15 @@
           "primaryKey": true,
           "notNull": true
         },
-        "calendshare_id": {
-          "name": "calendshare_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "day": {
-          "name": "day",
+        "name": {
+          "name": "name",
           "type": "text",
           "primaryKey": false,
           "notNull": true
         }
       },
       "indexes": {},
-      "foreignKeys": {
-        "calendshare_days_calendshare_id_calendshares_id_fk": {
-          "name": "calendshare_days_calendshare_id_calendshares_id_fk",
-          "tableFrom": "calendshare_days",
-          "tableTo": "calendshares",
-          "columnsFrom": [
-            "calendshare_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
+      "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {}
     },
@@ -128,35 +108,15 @@
           "primaryKey": true,
           "notNull": true
         },
-        "calendshare_id": {
-          "name": "calendshare_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "hour": {
-          "name": "hour",
+        "number": {
+          "name": "number",
           "type": "integer",
           "primaryKey": false,
           "notNull": true
         }
       },
       "indexes": {},
-      "foreignKeys": {
-        "calendshare_hours_calendshare_id_calendshares_id_fk": {
-          "name": "calendshare_hours_calendshare_id_calendshares_id_fk",
-          "tableFrom": "calendshare_hours",
-          "tableTo": "calendshares",
-          "columnsFrom": [
-            "calendshare_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
+      "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {}
     },

@@ -1,17 +1,65 @@
 <script lang="ts">
 	import "../app.postcss"
-	import { AppShell, AppBar, Modal, type ModalComponent } from "@skeletonlabs/skeleton"
+	import {
+		AppShell,
+		AppBar,
+		Modal,
+		getModalStore,
+		type ModalComponent,
+		type ModalSettings
+	} from "@skeletonlabs/skeleton"
 	import { computePosition, autoUpdate, flip, shift, offset, arrow } from "@floating-ui/dom"
 	import { storePopup } from "@skeletonlabs/skeleton"
 	import { initializeStores } from "@skeletonlabs/skeleton"
-	import DayWeekCalendarGuestLogin from "$lib/calendshare/core/DayWeekCalendarGuestLogin.svelte"
-
-	// Modal setup
+	import GuestLogin from "$lib/calendshare/svelte/components/auth/GuestLogin.svelte"
+	import { onMount } from "svelte"
+	import { invalidate } from "$app/navigation"
+	import ColorPalette from "$lib/calendshare/svelte/components/core/ColorPalette.svelte"
+	import { browser } from "$app/environment"
 
 	storePopup.set({ computePosition, autoUpdate, flip, shift, offset, arrow })
 	initializeStores()
+
 	const modalRegistry: Record<string, ModalComponent> = {
-		dayWeekCalendarGuestLogin: { ref: DayWeekCalendarGuestLogin }
+		guestLogin: { ref: GuestLogin },
+		colorPalette: { ref: ColorPalette }
+	}
+
+	export let data
+
+	let { supabase, session } = data
+	$: ({ supabase, session } = data)
+
+	onMount(() => {
+		// Reset session data for all components when the session changes/expires
+		const { data } = supabase.auth.onAuthStateChange((_, _session) => {
+			if (_session?.expires_at !== session?.expires_at) {
+				invalidate("supabase:auth")
+			}
+		})
+
+		return () => data.subscription.unsubscribe()
+	})
+
+	let guestId: string | undefined
+	if (browser) {
+		const serializedGuestData = localStorage.getItem("guest")
+		guestId = serializedGuestData ? JSON.parse(serializedGuestData).id : undefined
+	}
+
+	const modalStore = getModalStore()
+
+	function handleCreateGuest() {
+		const modal: ModalSettings = {
+			type: "component",
+			component: "guestLogin",
+			response: ({ id }) => {
+				guestId = id
+				console.log(guestId)
+			}
+		}
+
+		modalStore.trigger(modal)
 	}
 </script>
 
@@ -30,10 +78,8 @@
 	<link rel="manifest" href="/site.webmanifest" />
 </svelte:head>
 
-<!-- App Shell -->
 <AppShell>
 	<svelte:fragment slot="header">
-		<!-- App Bar -->
 		<AppBar>
 			<svelte:fragment slot="lead">
 				<a href="/" class="flex gap-2 items-center">
@@ -42,10 +88,27 @@
 				</a>
 			</svelte:fragment>
 			<svelte:fragment slot="trail">
-				<a class="btn btn-sm variant-ghost-surface" href="/new" rel="noreferrer"> New Calendar </a>
+				{#if !session && !guestId}
+					<button on:click={handleCreateGuest} class="btn btn-sm variant-ghost-surface">
+						New Calendshare
+					</button>
+					<a class="btn btn-sm variant-ghost-surface" href="/login" rel="noreferrer"> Login </a>
+				{:else if !session}
+					<a
+						href="/new?guestId={guestId}"
+						data-sveltekit-preload-data="off"
+						class="btn btn-sm variant-ghost-surface"
+					>
+						New Calendshare
+					</a>
+					<a class="btn btn-sm variant-ghost-surface" href="/login" rel="noreferrer"> Login </a>
+				{:else}
+					<a href="/new" class="btn btn-sm variant-ghost-surface"> New Calendshare </a>
+					<a class="btn btn-sm variant-ghost-surface" href="/account" rel="noreferrer">Dashboard</a>
+				{/if}
 			</svelte:fragment>
 		</AppBar>
 	</svelte:fragment>
-	<!-- Page Route Content -->
+
 	<slot />
 </AppShell>

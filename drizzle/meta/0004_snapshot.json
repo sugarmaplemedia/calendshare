@@ -1,6 +1,6 @@
 {
-  "id": "42fb184c-523e-4f54-884b-2612313cefab",
-  "prevId": "00000000-0000-0000-0000-000000000000",
+  "id": "7952818b-ab26-4340-a0ed-b9a55be97b41",
+  "prevId": "f96f40c3-fc6f-4c5d-b17c-e003becd231b",
   "version": "5",
   "dialect": "pg",
   "tables": {
@@ -76,37 +76,44 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {}
     },
-    "calendshare_days": {
-      "name": "calendshare_days",
+    "calendshare_custom_days": {
+      "name": "calendshare_custom_days",
       "schema": "",
       "columns": {
-        "id": {
-          "name": "id",
-          "type": "serial",
-          "primaryKey": true,
-          "notNull": true
-        },
         "calendshare_id": {
           "name": "calendshare_id",
           "type": "uuid",
           "primaryKey": false,
           "notNull": true
         },
-        "day": {
-          "name": "day",
-          "type": "text",
+        "day_id": {
+          "name": "day_id",
+          "type": "integer",
           "primaryKey": false,
           "notNull": true
         }
       },
       "indexes": {},
       "foreignKeys": {
-        "calendshare_days_calendshare_id_calendshares_id_fk": {
-          "name": "calendshare_days_calendshare_id_calendshares_id_fk",
-          "tableFrom": "calendshare_days",
+        "calendshare_custom_days_calendshare_id_calendshares_id_fk": {
+          "name": "calendshare_custom_days_calendshare_id_calendshares_id_fk",
+          "tableFrom": "calendshare_custom_days",
           "tableTo": "calendshares",
           "columnsFrom": [
             "calendshare_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "calendshare_custom_days_day_id_calendshare_days_id_fk": {
+          "name": "calendshare_custom_days_day_id_calendshare_days_id_fk",
+          "tableFrom": "calendshare_custom_days",
+          "tableTo": "calendshare_days",
+          "columnsFrom": [
+            "day_id"
           ],
           "columnsTo": [
             "id"
@@ -118,8 +125,8 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {}
     },
-    "calendshare_hours": {
-      "name": "calendshare_hours",
+    "calendshare_custom_hours": {
+      "name": "calendshare_custom_hours",
       "schema": "",
       "columns": {
         "id": {
@@ -139,13 +146,20 @@
           "type": "integer",
           "primaryKey": false,
           "notNull": true
+        },
+        "minute": {
+          "name": "minute",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
         }
       },
       "indexes": {},
       "foreignKeys": {
-        "calendshare_hours_calendshare_id_calendshares_id_fk": {
-          "name": "calendshare_hours_calendshare_id_calendshares_id_fk",
-          "tableFrom": "calendshare_hours",
+        "calendshare_custom_hours_calendshare_id_calendshares_id_fk": {
+          "name": "calendshare_custom_hours_calendshare_id_calendshares_id_fk",
+          "tableFrom": "calendshare_custom_hours",
           "tableTo": "calendshares",
           "columnsFrom": [
             "calendshare_id"
@@ -157,6 +171,28 @@
           "onUpdate": "no action"
         }
       },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
+    "calendshare_days": {
+      "name": "calendshare_days",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {}
     },
@@ -182,11 +218,18 @@
           "primaryKey": false,
           "notNull": true
         },
-        "hour_id": {
-          "name": "hour_id",
+        "hour": {
+          "name": "hour",
           "type": "integer",
           "primaryKey": false,
           "notNull": true
+        },
+        "minute": {
+          "name": "minute",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
         },
         "status": {
           "name": "status",
@@ -216,19 +259,6 @@
           "tableTo": "calendshare_days",
           "columnsFrom": [
             "day_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "calendshare_record_entries_hour_id_calendshare_hours_id_fk": {
-          "name": "calendshare_record_entries_hour_id_calendshare_hours_id_fk",
-          "tableFrom": "calendshare_record_entries",
-          "tableTo": "calendshare_hours",
-          "columnsFrom": [
-            "hour_id"
           ],
           "columnsTo": [
             "id"

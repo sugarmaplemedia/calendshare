@@ -1,6 +1,6 @@
 {
-  "id": "42fb184c-523e-4f54-884b-2612313cefab",
-  "prevId": "00000000-0000-0000-0000-000000000000",
+  "id": "80d36268-ae41-4b6b-9ddd-afef6f8a6b99",
+  "prevId": "42fb184c-523e-4f54-884b-2612313cefab",
   "version": "5",
   "dialect": "pg",
   "tables": {
@@ -92,8 +92,8 @@
           "primaryKey": false,
           "notNull": true
         },
-        "day": {
-          "name": "day",
+        "name": {
+          "name": "name",
           "type": "text",
           "primaryKey": false,
           "notNull": true
@@ -134,8 +134,8 @@
           "primaryKey": false,
           "notNull": true
         },
-        "hour": {
-          "name": "hour",
+        "number": {
+          "name": "number",
           "type": "integer",
           "primaryKey": false,
           "notNull": true
