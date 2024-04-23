@@ -40,7 +40,7 @@
 	<aside class="alert variant-ghost-warning">
 		<p class="alert-message">
 			<span class="font-bold">Warning: guest accounts are not secure.</span> Anybody with access to this
-			calendar can log in and change your times.
+			calendar can log in and change your availability.
 		</p>
 	</aside>
 

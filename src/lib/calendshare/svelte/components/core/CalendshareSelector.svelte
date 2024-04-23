@@ -5,25 +5,29 @@
 	import { popup, type PopupSettings } from "@skeletonlabs/skeleton"
 	import { fade } from "svelte/transition"
 	import type { CalendshareContext } from "./CalendshareState.types"
-	import type { Calendshare } from "$lib/drizzle/schema"
+	import type {
+		Calendshare,
+		CalendshareWithRelations,
+		RecordEntryStatusType
+	} from "$lib/drizzle/schema"
+	import CalendshareAvailabilityMode from "./CalendshareAvailabilityMode.svelte"
+	import { derived } from "svelte/store"
 
-	const { state, activeUserRecord, updateRecordEntry } =
+	const { state, user, currentMode, invisibleRecords, updateRecordEntry, userRecord } =
 		getContext<CalendshareContext>("CalendshareContext")
 
 	function handleSelectHour(day: string, hour: number) {
-		console.log("Day, Hour:", day, hour)
-
 		if (tool == "view") {
 			return
 		}
 
-		if ($state.activeUser) {
+		if ($user && !$invisibleRecords.includes($userRecord!.id)) {
 			if (tool == "toggle") {
-				updateRecordEntry(day, hour, "available", { mode: "toggle" })
+				updateRecordEntry(day, hour, $currentMode, { mode: "toggle" })
 			} else if (tool == "add") {
-				// syncHourForDay(day, hour, "available")
+				updateRecordEntry(day, hour, $currentMode, { mode: "add" })
 			} else if (tool == "remove") {
-				// syncHourForDay(day, hour, "unavailable")
+				updateRecordEntry(day, hour, $currentMode, { mode: "remove" })
 			}
 		} else {
 		}
@@ -35,8 +39,8 @@
 		placement: "bottom"
 	})
 
-	function getSelectorHours(calendshare: Calendshare) {
-		switch (calendshare.hoursTemplate) {
+	const hours = derived(state, ($state) => {
+		switch ($state.hoursTemplate) {
 			case "all_hours":
 				// 0:00 to 23:00
 				return Array.from({ length: 24 }, (_, i) => i)
@@ -44,12 +48,15 @@
 				// 8:00 to 16:00
 				return Array.from({ length: 10 }, (_, i) => i + 8)
 			case "custom":
-				return [] // TODO: implement
+				return Array.from(
+					{ length: ($state.endHour ?? 8) - ($state.startHour ?? 17) + 1 },
+					(_, i) => i + ($state.startHour ?? 8)
+				)
 		}
-	}
+	})
 
-	function getSelectorDays(calendshare: Calendshare) {
-		switch (calendshare.daysTemplate) {
+	const days = derived(state, ($state) => {
+		switch ($state.daysTemplate) {
 			case "all_week":
 				return ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
 			case "business_days":
@@ -57,20 +64,81 @@
 			case "weekend_only":
 				return ["Saturday", "Sunday"]
 			case "custom":
-				return [] // TODO: implement
+				const sortedDayNames = $state.days
+					.toSorted((a, b) => (a.dayId < b.dayId ? -1 : 1))
+					.map((day) => day.day.name)
+				return sortedDayNames
 		}
-	}
+	})
 
 	function usersAvailableAtHour(day: string, hour: number) {
 		return (
-			$state.calendshare.records.filter((record) => {
-				let existingHourStatus = record.entries.find((entry) => entry.hour == hour)
-				return existingHourStatus?.status == "available"
+			$state.records.filter((record) => {
+				let existingHourStatus = record.entries.find(
+					(entry) => entry.day.name === day && entry.hour == hour
+				)
+				return (
+					existingHourStatus?.status == "available" || existingHourStatus?.status == "preferred"
+				)
 			}) ?? []
 		)
 	}
 
-	let tool = "toggle"
+	function usersUnavailableAtHour(day: string, hour: number) {
+		return (
+			$state.records.filter((record) => {
+				let existingHourStatus = record.entries.find(
+					(entry) => entry.day.name === day && entry.hour == hour
+				)
+				return existingHourStatus?.status == "unavailable" || !existingHourStatus
+			}) ?? []
+		)
+	}
+
+	function getOverallAvailability(day: string, hour: number): RecordEntryStatusType | undefined {
+		const allEntriesForDayAndHour = $state.records
+			.flatMap((record) => record.entries)
+			.filter((entry) => entry.day.name == day && entry.hour == hour)
+
+		if (!allEntriesForDayAndHour.length) {
+			return
+		}
+
+		const noneAvailable = !allEntriesForDayAndHour.some(
+			(entry) =>
+				entry.day.name == day &&
+				entry.hour == hour &&
+				(entry.status == "available" || entry.status == "preferred")
+		)
+
+		if (noneAvailable) {
+			return "unavailable"
+		}
+
+		const allPreferredAvailable = !allEntriesForDayAndHour.some(
+			(entry) =>
+				entry.day.name == day &&
+				entry.hour == hour &&
+				(entry.status == "unavailable" || entry.status == "available")
+		)
+
+		if (allPreferredAvailable) {
+			return "preferred"
+		}
+
+		const allAvailable = !allEntriesForDayAndHour.some(
+			(entry) =>
+				entry.day.name == day &&
+				entry.hour == hour &&
+				(entry.status == "unavailable" || entry.status == "preferred")
+		)
+
+		if (allAvailable) {
+			return "available"
+		}
+	}
+
+	let tool = $user ? "toggle" : "view"
 
 	function handleSetToolToggle() {
 		tool = "toggle"
@@ -92,42 +160,113 @@
 <div class="grid grid-flow-col gap-2 card p-4 w-full xl:min-w-[416px]">
 	<div class="grid justify-self-end gap-2 -mt-0.5">
 		<div class="h-8"></div>
-		{#each getSelectorHours($state.calendshare) as hour}
+		{#each $hours as hour (hour)}
 			<div class="h-8 text-sm text-left w-20">
 				<p>{hourNumberToString(hour, { militaryTime: false })}</p>
 			</div>
 		{/each}
 	</div>
-	{#each getSelectorDays($state.calendshare) as day (day)}
+	{#each $days as day (day)}
 		<div class="flex flex-col gap-2 items-center">
 			<p class="">{day.slice(0, 3)}</p>
 			<div class="grid gap-2">
-				{#each getSelectorHours($state.calendshare) ?? [] as hour (`${day}:${hour}`)}
+				{#each $hours as hour (`${day}:${hour}`)}
+					{@const overallAbility = getOverallAvailability(day, hour)}
 					<button
 						use:clickOrDrag={() => {
 							handleSelectHour(day, hour)
 						}}
 						use:popup={getAvailabilityPopup(`${day}:${hour}`)}
-						class="w-8 sm:w-12 md:w-16 lg:w-20 xl:w-24 [&>*]:pointer-events-none bg-white h-8 grid-flow-row relative rounded-md overflow-hidden"
+						class="w-8 sm:w-12 md:w-16 lg:w-20 xl:w-24 [&>*]:pointer-events-none bg-white h-8 grid-flow-row flex relative rounded-md overflow-hidden
+                        {overallAbility === 'unavailable'
+							? 'scale-95 brightness-75'
+							: overallAbility === 'preferred'
+							  ? 'scale-110 shadow-lg shadow-surface-600'
+							  : overallAbility === 'available'
+							    ? 'scale-105'
+							    : ''}"
 					>
-						{#if $activeUserRecord?.entries.find((entry) => entry.day.name == day && entry.hour == hour)}
-							<span
-								transition:fade={{ duration: 100 }}
-								style={`background-color: ${$activeUserRecord.color};`}
-								class="opacity-70 block w-full h-full"
-							>
-							</span>
-						{/if}
-						{#each $state.calendshare.records as record}
-							{#if record.entries.find((entry) => entry.day.name == day && entry.hour == hour)}
+						{#each $state.records as record (`${record.userId}:${day}:${hour}`)}
+							{@const entry = record.entries.find(
+								(entry) => entry.day.name == day && entry.hour == hour
+							)}
+							{#if entry}
 								<span
 									transition:fade={{ duration: 100 }}
 									style={`background-color: ${record.color};`}
-									class=" absolute opacity-70 block w-full h-full top-0"
-								></span>
+									class="
+                                        flex items-center justify-center w-full h-full flex-grow top-0 transition-all origin-left
+                                        {!$invisibleRecords.includes(record.id)
+										? 'scale-x-100'
+										: 'scale-x-0'}
+                                    "
+								>
+									{#if entry.status === "available"}
+										<svg
+											xmlns="http://www.w3.org/2000/svg"
+											class="ionicon w-6"
+											viewBox="0 0 512 512"
+											><path
+												d="M448 256c0-106-86-192-192-192S64 150 64 256s86 192 192 192 192-86 192-192z"
+												fill="none"
+												stroke="currentColor"
+												stroke-miterlimit="10"
+												stroke-width="32"
+											/><path
+												fill="none"
+												stroke="currentColor"
+												stroke-linecap="round"
+												stroke-linejoin="round"
+												stroke-width="32"
+												d="M352 176L217.6 336 160 272"
+											/></svg
+										>
+									{:else if entry.status === "preferred"}
+										<svg
+											xmlns="http://www.w3.org/2000/svg"
+											class="ionicon w-6"
+											viewBox="0 0 512 512"
+											><path
+												d="M448 256c0-106-86-192-192-192S64 150 64 256s86 192 192 192 192-86 192-192z"
+												fill="none"
+												stroke="currentColor"
+												stroke-miterlimit="10"
+												stroke-width="32"
+											/><path
+												fill="none"
+												stroke="currentColor"
+												stroke-linecap="round"
+												stroke-linejoin="round"
+												stroke-width="32"
+												d="M368 192L256.13 320l-47.95-48M191.95 320L144 272M305.71 192l-51.55 59"
+											/></svg
+										>
+									{:else}
+										<svg
+											xmlns="http://www.w3.org/2000/svg"
+											class="ionicon w-6"
+											viewBox="0 0 512 512"
+											><path
+												d="M448 256c0-106-86-192-192-192S64 150 64 256s86 192 192 192 192-86 192-192z"
+												fill="none"
+												stroke="currentColor"
+												stroke-miterlimit="10"
+												stroke-width="32"
+											/><path
+												fill="none"
+												stroke="currentColor"
+												stroke-linecap="round"
+												stroke-linejoin="round"
+												stroke-width="32"
+												d="M320 320L192 192M192 320l128-128"
+											/></svg
+										>
+									{/if}
+								</span>
 							{/if}
 						{/each}
 					</button>
+
 					<div
 						class="card z-10 w-64 p-4 variant-filled-tertiary text-lg rounded-lg {tool != 'view' &&
 							'invisible pointer-events-none'}"
@@ -140,7 +279,7 @@
 									{ militaryTime: false }
 								)}
 							</h3>
-							{#if usersAvailableAtHour(day, hour).length == $state.calendshare.records.length}
+							{#if usersAvailableAtHour(day, hour).length == $state.records.length}
 								<div
 									class="card border-2 border-primary-200 rounded-md text-sm variant-filled-success p-2 text-left"
 								>
@@ -153,6 +292,12 @@
 									<p class="font-bold uppercase">Available</p>
 									<ul class="list-disc ml-4">
 										{#each usersAvailableAtHour(day, hour) as { user: { firstName, lastName } }}
+											<li>{firstName} {lastName}</li>
+										{/each}
+									</ul>
+									<p class="font-bold uppercase">Unavailable</p>
+									<ul class="list-disc ml-4">
+										{#each usersUnavailableAtHour(day, hour) as { user: { firstName, lastName } }}
 											<li>{firstName} {lastName}</li>
 										{/each}
 									</ul>
@@ -173,7 +318,38 @@
 	{/each}
 </div>
 
-<div class="mt-2 w-full">
+<div class="mt-2 w-full flex gap-2">
+	<div class="grow flex">
+		<button
+			on:click={handleSetToolView}
+			class="btn py-2 px-4 w-fit {tool == 'view' ? 'variant-filled' : ' variant-ghost'}"
+		>
+			<span class="w-4 h-4 {tool == 'view' ? 'fill-surface-900' : 'fill-primary-500'}">
+				<svg xmlns="http://www.w3.org/2000/svg" class="ionicon" viewBox="0 0 512 512"
+					><path
+						d="M255.66 112c-77.94 0-157.89 45.11-220.83 135.33a16 16 0 00-.27 17.77C82.92 340.8 161.8 400 255.66 400c92.84 0 173.34-59.38 221.79-135.25a16.14 16.14 0 000-17.47C428.89 172.28 347.8 112 255.66 112z"
+						fill="none"
+						stroke="currentColor"
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						stroke-width="32"
+					/><circle
+						cx="256"
+						cy="256"
+						r="80"
+						fill="none"
+						stroke="currentColor"
+						stroke-miterlimit="10"
+						stroke-width="32"
+					/></svg
+				>
+			</span>
+			<span>View</span>
+		</button>
+	</div>
+
+	<CalendshareAvailabilityMode />
+
 	<button
 		on:click={handleSetToolToggle}
 		class="btn py-2 px-4 {tool == 'toggle' ? 'variant-filled' : ' variant-ghost'}"
@@ -197,7 +373,7 @@
 
 	<button
 		on:click={handleSetToolAdd}
-		class="btn py-2 px-4 {tool == 'add' ? 'variant-filled' : ' variant-ghost'}"
+		class="btn py-2 px-4 {tool == 'add' ? 'variant-filled' : ' variant-ghost-success'}"
 	>
 		<span class="w-4 h-4 {tool == 'add' ? 'fill-surface-900' : 'fill-primary-500'}">
 			<svg xmlns="http://www.w3.org/2000/svg" class="ionicon" viewBox="0 0 512 512"
@@ -216,7 +392,7 @@
 
 	<button
 		on:click={handleSetToolRemove}
-		class="btn py-2 px-4 {tool == 'remove' ? 'variant-filled' : ' variant-ghost'}"
+		class="btn py-2 px-4 {tool == 'remove' ? 'variant-filled' : ' variant-ghost-error'}"
 	>
 		<span class="w-4 h-4 {tool == 'remove' ? 'fill-surface-900' : 'fill-primary-500'}">
 			<svg xmlns="http://www.w3.org/2000/svg" class="ionicon" viewBox="0 0 512 512">
@@ -231,31 +407,5 @@
 			</svg>
 		</span>
 		<span>Remove</span>
-	</button>
-	<button
-		on:click={handleSetToolView}
-		class="btn py-2 px-4 {tool == 'view' ? 'variant-filled' : ' variant-ghost'}"
-	>
-		<span class="w-4 h-4 {tool == 'view' ? 'fill-surface-900' : 'fill-primary-500'}">
-			<svg xmlns="http://www.w3.org/2000/svg" class="ionicon" viewBox="0 0 512 512"
-				><path
-					d="M255.66 112c-77.94 0-157.89 45.11-220.83 135.33a16 16 0 00-.27 17.77C82.92 340.8 161.8 400 255.66 400c92.84 0 173.34-59.38 221.79-135.25a16.14 16.14 0 000-17.47C428.89 172.28 347.8 112 255.66 112z"
-					fill="none"
-					stroke="currentColor"
-					stroke-linecap="round"
-					stroke-linejoin="round"
-					stroke-width="32"
-				/><circle
-					cx="256"
-					cy="256"
-					r="80"
-					fill="none"
-					stroke="currentColor"
-					stroke-miterlimit="10"
-					stroke-width="32"
-				/></svg
-			>
-		</span>
-		<span>View</span>
 	</button>
 </div>

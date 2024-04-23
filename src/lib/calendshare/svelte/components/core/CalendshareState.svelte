@@ -1,66 +1,92 @@
 <script lang="ts">
 	import { setContext } from "svelte"
-	import { derived, writable } from "svelte/store"
+	import { derived, writable, type Writable } from "svelte/store"
 	import type { CalendshareWithRelations, User } from "$lib/drizzle/schema"
-	import type { CalendshareContext, CalendshareState } from "./CalendshareState.types"
+	import type {
+		CalendshareContext,
+		CalendshareState,
+		CalendshareUser,
+		CalendshareUserRecord,
+		CurrentMode
+	} from "./CalendshareState.types"
 	import { getModalStore, type ModalSettings } from "@skeletonlabs/skeleton"
 	import { invalidateAll } from "$app/navigation"
-	import type { Palette } from "$lib/calendshare/color"
+	import { getRandomColorFromPalette, palette, type Palette } from "$lib/calendshare/color"
 
 	export let calendshare: CalendshareWithRelations
 	export let activeUser: User | undefined
 	export let colors: Palette
 
-	console.log(activeUser)
+	const state: CalendshareState = writable(calendshare)
+	const currentMode: CurrentMode = writable("available")
 
-	// TODO: separate this data
-	const calendshareState: CalendshareState = writable({
-		calendshare,
-		activeUser
+	const user: CalendshareUser = writable(activeUser)
+	const userRecord: CalendshareUserRecord = derived([state, user], ([$state, $user]) => {
+		return $state.records.find((record) => record.userId === $user?.id)
 	})
+	$: $user = activeUser
 
-	$: $calendshareState.activeUser = activeUser
+	let invisibleRecords: Writable<Array<number>> = writable([])
+	let justMounted = true
 
-	$: if ($calendshareState.activeUser && !$activeUserRecord) {
-		addRecord()
-	}
+	// TODO: Add response to guestLogin modal
+	// $: if (activeUser && !getActiveUserRecord()) {
+	// 	addRecord()
+	// }
 
 	const modalStore = getModalStore()
-	function handleGuestLogin() {
-		const modal: ModalSettings = {
-			type: "component",
-			component: "guestLogin",
-			response: async () => {
-				await invalidateAll()
+	function handleJoinCalendshare() {
+		if (!$user) {
+			const modal: ModalSettings = {
+				type: "component",
+				component: "guestLogin",
+				response: async () => {
+					await invalidateAll()
+				}
 			}
-		}
 
-		modalStore.trigger(modal)
+			modalStore.trigger(modal)
+		} else {
+			addRecord()
+		}
+	}
+
+	let nextNewRecordId = 0
+	function getNextNewRecordId() {
+		return nextNewRecordId--
+	}
+
+	let nextNewRecordEntryId = 0
+	function getNextNewRecordEntryId() {
+		return nextNewRecordEntryId--
 	}
 
 	function addRecord() {
-		calendshareState.update((state) => {
-			state.calendshare.records.push({
-				id: -1,
-				calendshareId: state.calendshare.id,
-				color: "000000", // TODO: fix this
-				userId: state.activeUser!.id,
-				user: activeUser!,
-				entries: []
-			})
+		state.update((state) => {
+			const colorsNotInUse = palette.filter(
+				(color) => !$state.records.find((r) => r.color === color.hex)
+			)
+
+			state.records = [
+				...state.records,
+				{
+					id: getNextNewRecordId(),
+					calendshareId: state.id,
+					color: getRandomColorFromPalette(colorsNotInUse).hex,
+					userId: $user!.id,
+					user: $user!,
+					entries: []
+				}
+			]
+
 			return state
 		})
 	}
 
 	function updateRecordColor(color: string) {
-		calendshareState.update((state) => {
-			const recordToUpdate = state.calendshare.records.find(
-				(record) => (record.user.id = activeUser!.id)
-			)!
+		state.update((state) => {
+			const recordToUpdate = state.records.find((record) => record.user.id === activeUser!.id)!
 
-			console.log("Found Record", recordToUpdate)
-
-			// FIXME: broken for some reason, second client is updating first clients color
 			recordToUpdate.color = color
 
 			return state
@@ -73,20 +99,31 @@
 		status: "available" | "unavailable" | "preferred",
 		options: { mode: "add" | "remove" | "toggle" }
 	) {
-		calendshareState.update((state) => {
-			const recordToUpdate = state.calendshare.records.find(
-				(record) => (record.user.id = activeUser!.id)
-			)!
+		state.update((state) => {
+			const recordToUpdate = state.records.find((record) => record.user.id == activeUser!.id)!
 
 			function addEntry() {
+				const baseDays = [
+					{ id: 1, name: "Monday" },
+					{ id: 2, name: "Tuesday" },
+					{ id: 3, name: "Wednesday" },
+					{ id: 4, name: "Thursday" },
+					{ id: 5, name: "Friday" },
+					{ id: 6, name: "Saturday" },
+					{ id: 7, name: "Sunday" },
+					...state.days.map(({ day }) => day)
+				]
+
+				const dayObj = baseDays.find((d) => d.name === day)!
+
 				recordToUpdate.entries = [
 					...recordToUpdate.entries,
 					{
-						id: -1,
+						id: getNextNewRecordEntryId(),
 						recordId: recordToUpdate.id,
-						dayId: -1,
+						dayId: dayObj.id,
 						day: {
-							id: -1,
+							id: dayObj.id,
 							name: day
 						},
 						hour,
@@ -110,9 +147,9 @@
 						(entry) => entry.day.name == day && entry.hour == hour
 					)
 
-					if (possibleExistingEntryIndex === -1) {
+					if (possibleExistingEntryIndex === -1 && options.mode === "toggle") {
 						addEntry()
-					} else {
+					} else if (possibleExistingEntryIndex !== -1) {
 						removeEntry(possibleExistingEntryIndex)
 					}
 					break
@@ -122,14 +159,19 @@
 		})
 	}
 
-	const activeUserRecord = derived(calendshareState, ({ calendshare, activeUser }) =>
-		activeUser ? calendshare.records.find((record) => record.userId === activeUser!.id) : undefined
-	)
+	function getActiveUserRecord() {
+		return $user ? $state.records.find((record) => record.userId === activeUser!.id) : undefined
+	}
 
 	// Asynchronously updates the backend on every change
 	let debounceTimeout: ReturnType<typeof setTimeout>
 
-	calendshareState.subscribe(({ calendshare }) => {
+	state.subscribe((calendshare) => {
+		if (justMounted) {
+			justMounted = false
+			return
+		}
+
 		clearTimeout(debounceTimeout)
 
 		debounceTimeout = setTimeout(async () => {
@@ -142,9 +184,45 @@
 			})
 
 			if (updateRes.ok) {
-				const { updates } = await updateRes.json()
+				const { updates, newIds, newRelations } = (await updateRes.json()) as {
+					updates: Array<string>
+					newIds: Record<string, Array<[number, number]>>
+					newRelations: Record<
+						string,
+						Array<[[number | string, number], [number | string, number]]>
+					>
+				}
+
 				if (updates.length) {
 					console.log("Updates:", updates)
+				}
+
+				if (newIds["records"]) {
+					for (const [oldId, newId] of newIds["records"]) {
+						const record = $state.records.find((r) => r.id === oldId)!
+						record.id = newId
+					}
+				}
+
+				if (newIds["entries"]) {
+					for (const [oldId, newId] of newIds["entries"]) {
+						const entry = $state.records.flatMap((r) => r.entries).find((e) => e.id === oldId)!
+						entry.id = newId
+					}
+				}
+
+				if (newIds["days"]) {
+					for (const [oldId, newId] of newIds["days"]) {
+						const { day } = $state.days.find((d) => d.day.id === oldId)!
+						day.id = newId
+					}
+				}
+
+				if (newRelations["calendsharesDays"]) {
+					for (const [[_, oldDayId], [__, newDayId]] of newRelations["calendsharesDays"]) {
+						const dayRelation = $state.days.find((d) => d.dayId === oldDayId)!
+						dayRelation.dayId = newDayId
+					}
 				}
 			}
 		}, 300) // 300ms debounce time
@@ -153,11 +231,16 @@
 	// All communication with the server will be defined within this file.
 
 	setContext<CalendshareContext>("CalendshareContext", {
-		state: calendshareState,
-		activeUserRecord,
+		state,
+		user,
+		userRecord,
+		currentMode,
+		invisibleRecords,
+		activeUser,
 		colors,
+		getActiveUserRecord,
 		updateRecordEntry,
-		handleGuestLogin,
+		handleGuestLogin: handleJoinCalendshare,
 		updateRecordColor
 	})
 </script>

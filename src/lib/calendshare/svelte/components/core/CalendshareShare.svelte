@@ -8,7 +8,7 @@
 	async function handleShare() {
 		await navigator
 			.share({
-				title: $state.calendshare.name ?? "CalendShare Calendar",
+				title: $state.name ?? "CalendShare Calendar",
 				text: "Check out this calendar!",
 				url: window.location.href
 			})
@@ -81,7 +81,7 @@
 </div>
 <a
 	use:popup={qrLinkPopup}
-	href={`https://quickchart.io/qr?text=https%3A%2F%2Fcalendshare.app%2F/${$state.calendshare.id}&size=512`}
+	href={`https://quickchart.io/qr?text=https%3A%2F%2Fcalendshare.app%2F/${$state.id}&size=512`}
 	target="_blank"
 	class="btn variant-ghost-surface w-fit"
 >

@@ -38,11 +38,14 @@
 
 	<div class="grid grid-cols-4 gap-4 w-full bg-surface-200 p-6 rounded-md">
 		{#each palette as paletteColor (paletteColor.name)}
+			{@const disabled =
+				$modalStore[0] && $modalStore[0].meta.unavailableColors.includes(paletteColor.hex)}
 			<label
 				for="user-color-palette-{paletteColor.name}"
 				class="
-                    w-12 h-12 {paletteColor.classes} cursor-pointer focus-within:outline-4 rounded-sm outline-none transition-all
+                    w-12 h-12 {paletteColor.classes} focus-within:outline-4 rounded-sm outline-none transition-all
                     {hexColor === paletteColor.hex ? 'brightness-110 scale-110 shadow-lg' : ''}
+                    {disabled ? '!bg-primary-900 scale-75 cursor-not-allowed' : 'cursor-pointer'}
                 "
 				title={paletteColor.name}
 			>
@@ -50,12 +53,11 @@
 					aria-label={paletteColor.name}
 					type="radio"
 					id="user-color-palette-{paletteColor.name}"
-					class="opacity-0"
+					class="opacity-0 {disabled ? 'cursor-not-allowed' : 'cursor-pointer'}"
 					value={paletteColor.hex}
 					checked={hexColor === paletteColor.hex}
 					on:input={() => (hexColor = paletteColor.hex)}
-					disabled={$modalStore[0] &&
-						$modalStore[0].meta.unavailableColors.includes(paletteColor.hex)}
+					{disabled}
 					bind:this={paletteColor.input}
 				/>
 			</label>

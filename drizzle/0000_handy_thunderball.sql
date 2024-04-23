@@ -32,23 +32,31 @@ CREATE TABLE IF NOT EXISTS "calendshares" (
 	"owner_user_id" uuid NOT NULL
 );
 --> statement-breakpoint
-CREATE TABLE IF NOT EXISTS "calendshare_days" (
-	"id" serial PRIMARY KEY NOT NULL,
+CREATE TABLE IF NOT EXISTS "calendshare_custom_days" (
 	"calendshare_id" uuid NOT NULL,
-	"day" text NOT NULL
+	"day_id" integer NOT NULL,
+	CONSTRAINT "calendshare_custom_days_calendshare_id_day_id_pk" PRIMARY KEY("calendshare_id","day_id")
 );
 --> statement-breakpoint
-CREATE TABLE IF NOT EXISTS "calendshare_hours" (
+CREATE TABLE IF NOT EXISTS "calendshare_custom_hours" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"calendshare_id" uuid NOT NULL,
-	"hour" integer NOT NULL
+	"hour" integer NOT NULL,
+	"minute" integer DEFAULT 0 NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE IF NOT EXISTS "days" (
+	"id" serial PRIMARY KEY NOT NULL,
+	"name" text NOT NULL,
+	CONSTRAINT "days_name_unique" UNIQUE("name")
 );
 --> statement-breakpoint
 CREATE TABLE IF NOT EXISTS "calendshare_record_entries" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"record_id" integer NOT NULL,
 	"day_id" integer NOT NULL,
-	"hour_id" integer NOT NULL,
+	"hour" integer NOT NULL,
+	"minute" integer DEFAULT 0 NOT NULL,
 	"status" "calendshare_record_entry_status" NOT NULL
 );
 --> statement-breakpoint
@@ -74,13 +82,19 @@ EXCEPTION
 END $$;
 --> statement-breakpoint
 DO $$ BEGIN
- ALTER TABLE "calendshare_days" ADD CONSTRAINT "calendshare_days_calendshare_id_calendshares_id_fk" FOREIGN KEY ("calendshare_id") REFERENCES "calendshares"("id") ON DELETE no action ON UPDATE no action;
+ ALTER TABLE "calendshare_custom_days" ADD CONSTRAINT "calendshare_custom_days_calendshare_id_calendshares_id_fk" FOREIGN KEY ("calendshare_id") REFERENCES "calendshares"("id") ON DELETE no action ON UPDATE no action;
 EXCEPTION
  WHEN duplicate_object THEN null;
 END $$;
 --> statement-breakpoint
 DO $$ BEGIN
- ALTER TABLE "calendshare_hours" ADD CONSTRAINT "calendshare_hours_calendshare_id_calendshares_id_fk" FOREIGN KEY ("calendshare_id") REFERENCES "calendshares"("id") ON DELETE no action ON UPDATE no action;
+ ALTER TABLE "calendshare_custom_days" ADD CONSTRAINT "calendshare_custom_days_day_id_days_id_fk" FOREIGN KEY ("day_id") REFERENCES "days"("id") ON DELETE no action ON UPDATE no action;
+EXCEPTION
+ WHEN duplicate_object THEN null;
+END $$;
+--> statement-breakpoint
+DO $$ BEGIN
+ ALTER TABLE "calendshare_custom_hours" ADD CONSTRAINT "calendshare_custom_hours_calendshare_id_calendshares_id_fk" FOREIGN KEY ("calendshare_id") REFERENCES "calendshares"("id") ON DELETE no action ON UPDATE no action;
 EXCEPTION
  WHEN duplicate_object THEN null;
 END $$;
@@ -92,13 +106,7 @@ EXCEPTION
 END $$;
 --> statement-breakpoint
 DO $$ BEGIN
- ALTER TABLE "calendshare_record_entries" ADD CONSTRAINT "calendshare_record_entries_day_id_calendshare_days_id_fk" FOREIGN KEY ("day_id") REFERENCES "calendshare_days"("id") ON DELETE no action ON UPDATE no action;
-EXCEPTION
- WHEN duplicate_object THEN null;
-END $$;
---> statement-breakpoint
-DO $$ BEGIN
- ALTER TABLE "calendshare_record_entries" ADD CONSTRAINT "calendshare_record_entries_hour_id_calendshare_hours_id_fk" FOREIGN KEY ("hour_id") REFERENCES "calendshare_hours"("id") ON DELETE no action ON UPDATE no action;
+ ALTER TABLE "calendshare_record_entries" ADD CONSTRAINT "calendshare_record_entries_day_id_days_id_fk" FOREIGN KEY ("day_id") REFERENCES "days"("id") ON DELETE no action ON UPDATE no action;
 EXCEPTION
  WHEN duplicate_object THEN null;
 END $$;

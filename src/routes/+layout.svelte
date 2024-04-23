@@ -6,7 +6,8 @@
 		Modal,
 		getModalStore,
 		type ModalComponent,
-		type ModalSettings
+		type ModalSettings,
+		Toast
 	} from "@skeletonlabs/skeleton"
 	import { computePosition, autoUpdate, flip, shift, offset, arrow } from "@floating-ui/dom"
 	import { storePopup } from "@skeletonlabs/skeleton"
@@ -14,15 +15,19 @@
 	import GuestLogin from "$lib/calendshare/svelte/components/auth/GuestLogin.svelte"
 	import { onMount } from "svelte"
 	import { invalidate } from "$app/navigation"
-	import ColorPalette from "$lib/calendshare/svelte/components/core/ColorPalette.svelte"
+	import ColorPaletteModal from "$lib/calendshare/svelte/components/core/ColorPaletteModal.svelte"
 	import { browser } from "$app/environment"
+	import CustomDaysModal from "$lib/calendshare/svelte/components/core/CustomDaysModal.svelte"
+	import CustomHoursModal from "$lib/calendshare/svelte/components/core/CustomHoursModal.svelte"
 
 	storePopup.set({ computePosition, autoUpdate, flip, shift, offset, arrow })
 	initializeStores()
 
 	const modalRegistry: Record<string, ModalComponent> = {
 		guestLogin: { ref: GuestLogin },
-		colorPalette: { ref: ColorPalette }
+		colorPalette: { ref: ColorPaletteModal },
+		customDays: { ref: CustomDaysModal },
+		customHours: { ref: CustomHoursModal }
 	}
 
 	export let data
@@ -64,6 +69,7 @@
 </script>
 
 <Modal components={modalRegistry} />
+<Toast />
 
 <svelte:head>
 	<title>Calendshare</title>
@@ -94,9 +100,14 @@
 					</button>
 					<a class="btn btn-sm variant-ghost-surface" href="/login" rel="noreferrer"> Login </a>
 				{:else if !session}
+					<p class="flex gap-2 scale-y-90 text-lg">
+						<a href="/login" class="font-black text-white hover:underline">Login</a>
+						<span>/</span>
+						<a href="/sign-up" class="font-black text-white hover:underline">Sign Up</a>
+					</p>
 					<a
 						href="/new?guestId={guestId}"
-						data-sveltekit-preload-data="off"
+						data-sveltekit-preload-data="false"
 						class="btn btn-sm variant-ghost-surface"
 					>
 						New Calendshare

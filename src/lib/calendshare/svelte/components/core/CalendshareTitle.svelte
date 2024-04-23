@@ -6,15 +6,15 @@
 </script>
 
 <svelte:head>
-	<title>{$state.calendshare.name} | Calendshare</title>
+	<title>{$state.name} | Calendshare</title>
 </svelte:head>
 
 <header class="mb-6 flex flex-col gap-2">
 	<h1 class="text-left w-full block text-4xl font-black tracking-wide">
-		{$state.calendshare.name}
+		{$state.name}
 	</h1>
 
-	{#if $state.calendshare?.description}
-		<p>{$state.calendshare.description}</p>
+	{#if $state.description.length}
+		<p>{$state.description}</p>
 	{/if}
 </header>

@@ -81,6 +81,7 @@ export const palette: Palette = [
 	}
 ]
 
-export function getRandomColorFromPalette() {
-	return palette[Math.floor(Math.random() * palette.length)]
+export function getRandomColorFromPalette(optionalPalette?: Palette) {
+	const p = optionalPalette || palette
+	return p[Math.floor(Math.random() * p.length)]
 }

@@ -41,8 +41,11 @@ export class CalendshareClient {
 			{
 				where: eq(calendshares.id, id),
 				with: {
-					days: true,
-					hours: true,
+					days: {
+						with: {
+							day: true
+						}
+					},
 					records: {
 						with: {
 							entries: {

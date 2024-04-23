@@ -1,4 +1,4 @@
-import { integer, pgEnum, pgTable, serial, text, uuid } from "drizzle-orm/pg-core"
+import { integer, pgEnum, pgTable, primaryKey, serial, text, uuid } from "drizzle-orm/pg-core"
 import { users, type User } from "./User"
 import { relations } from "drizzle-orm"
 
@@ -17,24 +17,32 @@ export const HoursTemplate = pgEnum("calendshare_hours_template", [
 
 export const calendshares = pgTable("calendshares", {
 	id: uuid("id").defaultRandom().primaryKey(),
+	ownerId: uuid("owner_user_id")
+		.references(() => users.id)
+		.notNull(),
 	name: text("name").default("A New Calendshare").notNull(),
 	description: text("description").default("").notNull(),
 	visibility: Visibility("visibility").default("public").notNull(),
 	daysTemplate: DaysTemplate("days_template").default("all_week").notNull(),
 	hoursTemplate: HoursTemplate("hours_template").default("business_hours").notNull(),
-	ownerId: uuid("owner_user_id")
-		.references(() => users.id)
-		.notNull()
+	startHour: integer("start_hour"),
+	endHour: integer("end_hour"),
+	timeIncrement: integer("time_increment").default(60).notNull()
 })
 
-export const calendsharesCustomDays = pgTable("calendshare_custom_days", {
-	calendshareId: uuid("calendshare_id")
-		.references(() => calendshares.id)
-		.notNull(),
-	dayId: integer("day_id")
-		.references(() => days.id)
-		.notNull()
-})
+export const calendsharesCustomDays = pgTable(
+	"calendshare_custom_days",
+	{
+		calendshareId: uuid("calendshare_id")
+			.references(() => calendshares.id)
+			.notNull(),
+		dayId: integer("day_id")
+			.references(() => days.id)
+			.notNull()
+	},
+	(table) => ({ pk: primaryKey({ columns: [table.calendshareId, table.dayId] }) })
+)
+
 export const calendsharesCustomDaysRelations = relations(calendsharesCustomDays, ({ one }) => ({
 	calendshare: one(calendshares, {
 		fields: [calendsharesCustomDays.calendshareId],
@@ -42,41 +50,27 @@ export const calendsharesCustomDaysRelations = relations(calendsharesCustomDays,
 	}),
 	day: one(days, { fields: [calendsharesCustomDays.dayId], references: [days.id] })
 }))
-
-export const calendsharesCustomHours = pgTable("calendshare_custom_hours", {
-	id: serial("id").primaryKey(),
-	calendshareId: uuid("calendshare_id")
-		.references(() => calendshares.id)
-		.notNull(),
-	hour: integer("hour").notNull(), // Number between 0 and 23
-	minute: integer("minute").default(0).notNull() // Number between 0 and 59
-})
-export const calendsharesCustomHoursRelations = relations(calendsharesCustomHours, ({ one }) => ({
-	calendshare: one(calendshares, {
-		fields: [calendsharesCustomHours.calendshareId],
-		references: [calendshares.id]
-	})
-}))
+export type CalendshareCustomDaysWithRelations = typeof calendsharesCustomDays.$inferSelect & {
+	day: Day
+}
 
 export const calendsharesRelations = relations(calendshares, ({ one, many }) => ({
 	owner: one(users, { fields: [calendshares.ownerId], references: [users.id] }),
 	days: many(calendsharesCustomDays),
-	hours: many(calendsharesCustomHours),
 	records: many(records)
 }))
 
 export type Calendshare = typeof calendshares.$inferSelect
 export type CalendshareInsertValues = typeof calendshares.$inferInsert
 export type CalendshareWithRelations = Calendshare & {
-	days: Array<Day>
-	hours: Array<typeof calendsharesCustomHours.$inferSelect>
+	days: Array<CalendshareCustomDaysWithRelations>
 	records: Array<RecordsWithRelations>
 }
 // TODO: Define this dynamically rather than here, it'll be easier that way
 
 export const days = pgTable("days", {
 	id: serial("id").primaryKey(),
-	name: text("name").notNull()
+	name: text("name").unique().notNull()
 })
 
 export const daysRelations = relations(days, ({ many }) => ({
@@ -120,17 +114,18 @@ export const RecordEntryStatus = pgEnum("calendshare_record_entry_status", [
 	"available",
 	"preferred"
 ])
+export type RecordEntryStatusType = typeof recordEntries.$inferSelect.status
 
 export const recordEntries = pgTable("calendshare_record_entries", {
 	id: serial("id").primaryKey(),
 	recordId: integer("record_id")
-		.references(() => records.id)
+		.references(() => records.id, { onDelete: "cascade" })
 		.notNull(),
 	dayId: integer("day_id")
 		.references(() => days.id)
 		.notNull(),
 	hour: integer("hour").notNull(), // Number between 0 and 23
-	minute: integer("minute").default(0).notNull(), // Number between 0 and 59
+	minute: integer("minute").default(0).notNull(), // Number between 1 and 60
 	status: RecordEntryStatus("status").notNull()
 })
 

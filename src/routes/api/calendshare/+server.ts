@@ -2,7 +2,9 @@ import { error, json } from "@sveltejs/kit"
 import { CalendshareClient } from "$lib/calendshare/api"
 import {
 	calendshares,
+	calendsharesCustomDays,
 	days,
+	daysRelations,
 	recordEntries,
 	records,
 	type CalendshareInsertValues,
@@ -12,15 +14,15 @@ import { and, eq, ne, notInArray } from "drizzle-orm"
 
 export async function POST({ locals: { getSession }, request }) {
 	const session = await getSession()
-	const { guestId } = await request.json()
+	const { userId } = await request.json()
 
-	if (!session && !guestId) {
-		error(400, "You must either be logged in or supply a guest ID.");
+	if (!session && !userId) {
+		error(400, "You must either be logged in or supply a guest ID.")
 	}
 
 	const newCalendshareId = session
 		? await CalendshareClient.create({ ownerId: session.user.id })
-		: await CalendshareClient.create({ ownerId: guestId })
+		: await CalendshareClient.create({ ownerId: userId })
 
 	return json({ id: newCalendshareId })
 }
@@ -29,10 +31,8 @@ export async function PUT({ locals: { drizzle }, request }) {
 	const httpCalendshare = (await request.json()) as CalendshareWithRelations
 	const dbCalendshare = await CalendshareClient.get(httpCalendshare.id)
 
-	console.log("PUT Requested")
-
 	if (!dbCalendshare) {
-		error(400, "A calendshare of that ID does not exist.");
+		error(400, "A calendshare of that ID does not exist.")
 	}
 
 	const calendshareUpdates: CalendshareInsertValues = {
@@ -66,6 +66,16 @@ export async function PUT({ locals: { drizzle }, request }) {
 		successfulUpdates.push("Calendshare visibility has been updated.")
 	}
 
+	if (dbCalendshare.startHour != httpCalendshare.startHour) {
+		calendshareUpdates.startHour = httpCalendshare.startHour
+		successfulUpdates.push("Calendshare start hour has been updated.")
+	}
+
+	if (dbCalendshare.endHour != httpCalendshare.endHour) {
+		calendshareUpdates.endHour = httpCalendshare.endHour
+		successfulUpdates.push("Calendshare end hour has been updated.")
+	}
+
 	if (Object.keys(calendshareUpdates).length > 1) {
 		await drizzle
 			.update(calendshares)
@@ -73,12 +83,27 @@ export async function PUT({ locals: { drizzle }, request }) {
 			.where(eq(calendshares.id, httpCalendshare.id))
 	}
 
+	const newIds: Record<string, Array<[number, number]>> = {
+		// [oldId, newId]
+		records: [],
+		entries: [],
+		days: [],
+		daysRelations: []
+	}
+
+	const newRelations: Record<
+		string,
+		Array<[[number | string, number], [number | string, number]]>
+	> = {
+		calendsharesDays: []
+	}
+
 	for (const record of httpCalendshare.records) {
 		const dbRecordId = (
 			await drizzle
 				.insert(records)
 				.values({
-					id: record.id == null ? undefined : record.id,
+					id: record.id <= 0 ? undefined : record.id,
 					calendshareId: dbCalendshare.id,
 					userId: record.userId,
 					color: record.color
@@ -90,6 +115,10 @@ export async function PUT({ locals: { drizzle }, request }) {
 				.returning({ id: records.id })
 		)[0].id
 
+		if (record.id != dbRecordId) {
+			newIds.records.push([record.id, dbRecordId])
+		}
+
 		// Track IDs of all entries being pushed to DB for the purpose of removing anything that isn't sent from client side (i.e., removed)
 		const entriesToSave: Array<number> = []
 		for (const entry of record.entries) {
@@ -97,7 +126,7 @@ export async function PUT({ locals: { drizzle }, request }) {
 				await drizzle
 					.insert(recordEntries)
 					.values({
-						id: entry.id == -1 ? undefined : entry.id,
+						id: entry.id <= 0 ? undefined : entry.id,
 						recordId: dbRecordId,
 						dayId:
 							entry.dayId != -1
@@ -117,6 +146,10 @@ export async function PUT({ locals: { drizzle }, request }) {
 					.returning({ id: recordEntries.id })
 			)[0].id
 
+			if (entry.id != newEntryId) {
+				newIds.entries.push([entry.id, newEntryId])
+			}
+
 			entriesToSave.push(newEntryId)
 		}
 
@@ -130,5 +163,76 @@ export async function PUT({ locals: { drizzle }, request }) {
 			)
 	}
 
-	return json({ updates: successfulUpdates })
+	// Adding new days to calendshare...
+	for (const { day, calendshareId, dayId } of httpCalendshare.days) {
+		const newDayId = (
+			await drizzle
+				.insert(days)
+				.values({
+					id: day.id < 0 ? undefined : day.id,
+					name: day.name
+				})
+				.onConflictDoUpdate({
+					target: days.name,
+					set: { name: day.name }
+				})
+				.returning({ id: days.id })
+		)[0].id
+
+		// let newDayId = newDay?.id
+
+		// if (!newDayId) {
+		// 	newDayId = (await drizzle.query.days.findFirst({ where: eq(days.name, day.name) }))!.id
+		// }
+
+		const newCustomDayRelationId = (
+			await drizzle
+				.insert(calendsharesCustomDays)
+				.values({
+					calendshareId: dbCalendshare.id,
+					dayId: newDayId
+				})
+				.onConflictDoUpdate({
+					target: [calendsharesCustomDays.calendshareId, calendsharesCustomDays.dayId],
+					set: { dayId: newDayId }
+				})
+				.returning({
+					calendshareId: calendsharesCustomDays.calendshareId,
+					dayId: calendsharesCustomDays.dayId
+				})
+		)[0]
+
+		if (day.id != newDayId) {
+			newIds.days.push([day.id, newDayId])
+		}
+
+		if (newCustomDayRelationId.dayId != dayId) {
+			newRelations.calendsharesDays.push([
+				[calendshareId, dayId],
+				[newCustomDayRelationId.calendshareId, newCustomDayRelationId.dayId]
+			])
+		}
+	}
+
+	for (const _ of newRelations.calendsharesDays) {
+		successfulUpdates.push("Calendshare custom days have been added.")
+	}
+
+	// ...and removing days that are no longer in the calendshare
+	for (const { day: dbDay } of dbCalendshare.days) {
+		if (!httpCalendshare.days.find(({ day }) => day.name == dbDay.name)) {
+			await drizzle
+				.delete(calendsharesCustomDays)
+				.where(
+					and(
+						eq(calendsharesCustomDays.calendshareId, dbCalendshare.id),
+						eq(calendsharesCustomDays.dayId, dbDay.id)
+					)
+				)
+
+			successfulUpdates.push("Calendshare custom days have been removed.")
+		}
+	}
+
+	return json({ updates: successfulUpdates, newIds, newRelations })
 }
