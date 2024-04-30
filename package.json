@@ -1,6 +1,6 @@
 {
-	"name": "",
-	"version": "0.0.1",
+	"name": "calendshare",
+	"version": "2.0.0",
 	"private": true,
 	"scripts": {
 		"dev": "vite dev",
@@ -37,7 +37,7 @@
 		"typescript": "^5.0.0",
 		"vite": "^5.0.0",
 		"vite-node": "^1.5.0",
-		"vite-plugin-tailwind-purgecss": "0.1.4"
+		"vite-plugin-tailwind-purgecss": "^0.3.3"
 	},
 	"type": "module",
 	"dependencies": {
