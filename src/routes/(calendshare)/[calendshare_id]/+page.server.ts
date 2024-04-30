@@ -26,7 +26,7 @@ export async function load({ locals: { session, drizzle }, params, cookies }) {
 	const user = session
 		? await drizzle.query.users.findFirst({
 				where: eq(users.id, session.user.id)
-		  })
+			})
 		: undefined
 
 	// Personal: only let owner view the calendshare
@@ -38,7 +38,7 @@ export async function load({ locals: { session, drizzle }, params, cookies }) {
 	if (calendshare.visibility === "private") {
 		const isVerified = cookies.get("verified") === calendshare.id
 
-		if (!calendshare.records.map(({ userId }) => userId).includes(user?.id ?? "") && !isVerified) {
+		if (!calendshare.records.map(({ userId }) => userId).includes(user?.id ?? "") || !isVerified) {
 			redirect(303, `/locked/${calendshare.id}`)
 		}
 	}
