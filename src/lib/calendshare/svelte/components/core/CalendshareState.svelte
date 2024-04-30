@@ -1,248 +1,164 @@
+<script context="module" lang="ts">
+	type CalendshareUser = Writable<User | undefined>
+	type CalendshareUserRecord = Readable<Record | undefined>
+
+	export type Context = {
+		calendshareStore: CalendshareStore
+		recordsStore: RecordsStore
+		recordEntriesStore: RecordEntriesStore
+		daysStore: DaysStore
+		user: CalendshareUser
+		userRecord: CalendshareUserRecord
+		loggedInUsers: Writable<Array<string>>
+		colors: Palette
+		invisibleRecords: Writable<Array<number>>
+		currentMode: Writable<RecordEntryStatusType>
+		copyPersonalCalendshare: () => void
+		handleJoinCalendshare: () => void
+	}
+</script>
+
 <script lang="ts">
 	import { setContext } from "svelte"
-	import { derived, writable, type Writable } from "svelte/store"
-	import type { CalendshareWithRelations, User } from "$lib/drizzle/schema"
+	import { derived, writable, type Readable, type Writable } from "svelte/store"
 	import type {
-		CalendshareContext,
-		CalendshareState,
-		CalendshareUser,
-		CalendshareUserRecord,
-		CurrentMode
-	} from "./CalendshareState.types"
-	import { getModalStore, type ModalSettings } from "@skeletonlabs/skeleton"
-	import { invalidateAll } from "$app/navigation"
+		CalendshareWithRelations,
+		User,
+		Record,
+		RecordEntryStatusType
+	} from "$lib/drizzle/schema"
+	import { getModalStore } from "@skeletonlabs/skeleton"
 	import { getRandomColorFromPalette, palette, type Palette } from "$lib/calendshare/color"
+	import type { SupabaseClient } from "@supabase/supabase-js"
+	import { getCalendshareStores } from "$lib/client/stores"
+	import type { CalendshareStore } from "$lib/client/stores/CalendshareStore"
+	import type { RecordsStore } from "$lib/client/stores/recordsStore"
+	import type { RecordEntriesStore } from "$lib/client/stores/recordEntriesStore"
+	import type { DaysStore } from "$lib/client/stores/daysStore"
+	import { invalidateAll } from "$app/navigation"
 
 	export let calendshare: CalendshareWithRelations
 	export let activeUser: User | undefined
-	export let colors: Palette
+	export let supabase: SupabaseClient
 
-	const state: CalendshareState = writable(calendshare)
-	const currentMode: CurrentMode = writable("available")
+	const { calendshareStore, recordsStore, recordEntriesStore, daysStore } = getCalendshareStores(
+		calendshare,
+		supabase
+	)
 
+	type CalendshareUser = Writable<User | undefined>
 	const user: CalendshareUser = writable(activeUser)
-	const userRecord: CalendshareUserRecord = derived([state, user], ([$state, $user]) => {
-		return $state.records.find((record) => record.userId === $user?.id)
-	})
 	$: $user = activeUser
 
-	let invisibleRecords: Writable<Array<number>> = writable([])
-	let justMounted = true
+	const userRecord = derived([recordsStore, user], ([$recordsStore, $user]) =>
+		$recordsStore.find((record) => record.userId === $user?.id)
+	)
 
-	// TODO: Add response to guestLogin modal
-	// $: if (activeUser && !getActiveUserRecord()) {
-	// 	addRecord()
-	// }
-
-	const modalStore = getModalStore()
-	function handleJoinCalendshare() {
-		if (!$user) {
-			const modal: ModalSettings = {
-				type: "component",
-				component: "guestLogin",
-				response: async () => {
-					await invalidateAll()
+	const loggedInUsers: Writable<Array<string>> = writable([])
+	const room = supabase
+		.channel(`calendshare-${calendshare.id}-room`, {
+			config: {
+				presence: {
+					key: $user?.id
 				}
 			}
+		})
+		.on("presence", { event: "sync" }, () => {
+			const newState = room.presenceState()
+			console.log("sync", newState)
 
-			modalStore.trigger(modal)
+			//@ts-ignore
+			$loggedInUsers = Object.values(newState).map((presenceArr) => presenceArr[0].userId)
+		})
+		.subscribe(async (status) => {
+			if (status !== "SUBSCRIBED") {
+				return
+			}
+
+			await room.track({ userId: $user?.id, guest: $user?.guest })
+		})
+
+	// Array of record IDs that should not be displayed
+	const invisibleRecords: Writable<Array<number>> = writable([])
+
+	type CurrentMode = Writable<RecordEntryStatusType>
+	const currentMode: CurrentMode = writable("available")
+
+	const modalStore = getModalStore()
+
+	function handleJoinCalendshare() {
+		if (!$user) {
+			modalStore.trigger({
+				type: "component",
+				component: "guestLogin",
+				response: async ({ guest }: { guest: User }) => {
+					if (guest) {
+						user.set(guest)
+						addUserToCalendshare(guest)
+						invalidateAll()
+					}
+				}
+			})
 		} else {
-			addRecord()
+			addUserToCalendshare($user)
+		}
+
+		function addUserToCalendshare(newUser: User) {
+			const colorsNotInUse = palette.filter(
+				(color) => !$recordsStore.find((r) => r.color === color.hex)
+			)
+
+			recordsStore.insert(
+				{
+					id: -1,
+					calendshareId: $calendshareStore.id,
+					color: getRandomColorFromPalette(colorsNotInUse).hex,
+					userId: newUser.id
+				},
+				newUser
+			)
 		}
 	}
 
-	let nextNewRecordId = 0
-	function getNextNewRecordId() {
-		return nextNewRecordId--
-	}
+	async function copyPersonalCalendshare() {
+		const ownCalendsharesRes = await fetch(`/api/user/${$user!.id}/personal`)
 
-	let nextNewRecordEntryId = 0
-	function getNextNewRecordEntryId() {
-		return nextNewRecordEntryId--
-	}
-
-	function addRecord() {
-		state.update((state) => {
-			const colorsNotInUse = palette.filter(
-				(color) => !$state.records.find((r) => r.color === color.hex)
-			)
-
-			state.records = [
-				...state.records,
-				{
-					id: getNextNewRecordId(),
-					calendshareId: state.id,
-					color: getRandomColorFromPalette(colorsNotInUse).hex,
-					userId: $user!.id,
-					user: $user!,
-					entries: []
-				}
-			]
-
-			return state
-		})
-	}
-
-	function updateRecordColor(color: string) {
-		state.update((state) => {
-			const recordToUpdate = state.records.find((record) => record.user.id === activeUser!.id)!
-
-			recordToUpdate.color = color
-
-			return state
-		})
-	}
-
-	function updateRecordEntry(
-		day: string,
-		hour: number,
-		status: "available" | "unavailable" | "preferred",
-		options: { mode: "add" | "remove" | "toggle" }
-	) {
-		state.update((state) => {
-			const recordToUpdate = state.records.find((record) => record.user.id == activeUser!.id)!
-
-			function addEntry() {
-				const baseDays = [
-					{ id: 1, name: "Monday" },
-					{ id: 2, name: "Tuesday" },
-					{ id: 3, name: "Wednesday" },
-					{ id: 4, name: "Thursday" },
-					{ id: 5, name: "Friday" },
-					{ id: 6, name: "Saturday" },
-					{ id: 7, name: "Sunday" },
-					...state.days.map(({ day }) => day)
-				]
-
-				const dayObj = baseDays.find((d) => d.name === day)!
-
-				recordToUpdate.entries = [
-					...recordToUpdate.entries,
-					{
-						id: getNextNewRecordEntryId(),
-						recordId: recordToUpdate.id,
-						dayId: dayObj.id,
-						day: {
-							id: dayObj.id,
-							name: day
-						},
-						hour,
-						minute: 0,
-						status
-					}
-				]
-			}
-
-			function removeEntry(removalIndex: number) {
-				recordToUpdate.entries.splice(removalIndex, 1)
-			}
-
-			switch (options.mode) {
-				case "add":
-					addEntry()
-					break
-				case "remove":
-				case "toggle":
-					const possibleExistingEntryIndex = recordToUpdate.entries.findIndex(
-						(entry) => entry.day.name == day && entry.hour == hour
-					)
-
-					if (possibleExistingEntryIndex === -1 && options.mode === "toggle") {
-						addEntry()
-					} else if (possibleExistingEntryIndex !== -1) {
-						removeEntry(possibleExistingEntryIndex)
-					}
-					break
-			}
-
-			return state
-		})
-	}
-
-	function getActiveUserRecord() {
-		return $user ? $state.records.find((record) => record.userId === activeUser!.id) : undefined
-	}
-
-	// Asynchronously updates the backend on every change
-	let debounceTimeout: ReturnType<typeof setTimeout>
-
-	state.subscribe((calendshare) => {
-		if (justMounted) {
-			justMounted = false
+		if (!ownCalendsharesRes.ok) {
+			console.error("Failed to fetch personal calendshares")
 			return
 		}
 
-		clearTimeout(debounceTimeout)
+		const ownCalendshares = (await ownCalendsharesRes.json()) as Array<CalendshareWithRelations>
 
-		debounceTimeout = setTimeout(async () => {
-			const updateRes = await fetch("/api/calendshare", {
-				method: "PUT",
-				headers: {
-					"Content-Type": "application/json"
-				},
-				body: JSON.stringify(calendshare)
-			})
-
-			if (updateRes.ok) {
-				const { updates, newIds, newRelations } = (await updateRes.json()) as {
-					updates: Array<string>
-					newIds: Record<string, Array<[number, number]>>
-					newRelations: Record<
-						string,
-						Array<[[number | string, number], [number | string, number]]>
-					>
-				}
-
-				if (updates.length) {
-					console.log("Updates:", updates)
-				}
-
-				if (newIds["records"]) {
-					for (const [oldId, newId] of newIds["records"]) {
-						const record = $state.records.find((r) => r.id === oldId)!
-						record.id = newId
-					}
-				}
-
-				if (newIds["entries"]) {
-					for (const [oldId, newId] of newIds["entries"]) {
-						const entry = $state.records.flatMap((r) => r.entries).find((e) => e.id === oldId)!
-						entry.id = newId
-					}
-				}
-
-				if (newIds["days"]) {
-					for (const [oldId, newId] of newIds["days"]) {
-						const { day } = $state.days.find((d) => d.day.id === oldId)!
-						day.id = newId
-					}
-				}
-
-				if (newRelations["calendsharesDays"]) {
-					for (const [[_, oldDayId], [__, newDayId]] of newRelations["calendsharesDays"]) {
-						const dayRelation = $state.days.find((d) => d.dayId === oldDayId)!
-						dayRelation.dayId = newDayId
-					}
-				}
+		modalStore.trigger({
+			type: "component",
+			component: "copyPersonalCalendshare",
+			meta: {
+				calendshares: ownCalendshares.map((calendshare) => calendshare.visibility === "personal"),
+				currentTemplate: $calendshareStore.daysTemplate
+			},
+			response: ({ calendshare }: { calendshare: CalendshareWithRelations }) => {
+				calendshare.records[0]?.entries.forEach(recordEntriesStore.insert)
 			}
-		}, 300) // 300ms debounce time
-	})
+		})
+	}
 
-	// All communication with the server will be defined within this file.
-
-	setContext<CalendshareContext>("CalendshareContext", {
-		state,
+	const context: Context = {
+		calendshareStore,
+		recordsStore,
+		recordEntriesStore,
+		daysStore,
 		user,
 		userRecord,
-		currentMode,
+		loggedInUsers,
+		colors: palette,
 		invisibleRecords,
-		activeUser,
-		colors,
-		getActiveUserRecord,
-		updateRecordEntry,
-		handleGuestLogin: handleJoinCalendshare,
-		updateRecordColor
-	})
+		currentMode,
+		copyPersonalCalendshare,
+		handleJoinCalendshare
+	}
+
+	setContext<Context>("calendshare:context", context)
 </script>
 
 <slot />

@@ -2,8 +2,6 @@ import { drizzle, type PostgresJsDatabase } from "drizzle-orm/postgres-js"
 import postgres from "postgres"
 import * as schema from "./schema"
 
-let drizzleCount = 0
-
 export async function createDrizzleClient(): Promise<PostgresJsDatabase<typeof schema>> {
 	const { DB_URL } = await import("$env/static/private")
 

@@ -4,10 +4,9 @@ import { calendshares } from "./Calendshare"
 
 export const users = pgTable("users", {
 	id: uuid("id").defaultRandom().primaryKey(),
-	firstName: text("first_name").default(""),
-	lastName: text("last_name").default(""),
-	guest: boolean("guest").notNull().default(false),
-	guestPassword: text("guest_password")
+	firstName: text("firstName").default(""),
+	lastName: text("lastName").default(""),
+	guest: boolean("guest").notNull().default(false)
 })
 export type User = typeof users.$inferSelect
 export type UserInsertValues = typeof users.$inferInsert

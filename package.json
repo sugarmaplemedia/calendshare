@@ -12,9 +12,11 @@
 		"format": "prettier --write .",
 		"db:migrate": "drizzle-kit generate:pg",
 		"db:push": "drizzle-kit push:pg",
-		"db:seed": "vite-node --options.transformMode.ssr='/.*/' src/lib/drizzle/seed.ts"
+		"db:seed": "vite-node --options.transformMode.ssr='/.*/' src/lib/drizzle/seed.ts",
+		"db:reset": "supabase db reset && npm run db:push && npm run db:seed"
 	},
 	"devDependencies": {
+		"@prgm/sveltekit-progress-bar": "^2.0.0",
 		"@skeletonlabs/skeleton": "^2.5.1",
 		"@skeletonlabs/tw-plugin": "^0.2.4",
 		"@sveltejs/adapter-auto": "^3.0.0",
@@ -43,6 +45,7 @@
 		"@supabase/auth-helpers-sveltekit": "^0.12.0",
 		"@supabase/auth-ui-shared": "^0.1.8",
 		"@supabase/auth-ui-svelte": "^0.2.9",
+		"@supabase/ssr": "^0.3.0",
 		"@supabase/supabase-js": "^2.39.7",
 		"cookie": "^0.6.0",
 		"drizzle-orm": "^0.29.4",

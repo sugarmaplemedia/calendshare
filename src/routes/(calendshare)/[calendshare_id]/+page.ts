@@ -1,16 +1,16 @@
+import { browser } from "$app/environment"
+
 export const ssr = false
 
 export function load({ data }) {
-	let { user } = data
-
-	// If no logged in user, attempt to retrieve guest user data.
-	if (!user) {
-		user = localStorage.getItem("guest") ? JSON.parse(localStorage.getItem("guest")!) : undefined
+	if (browser && !data.user) {
+		const guest = sessionStorage.getItem("guest")
+		if (guest) {
+			data.user = JSON.parse(guest)
+		}
 	}
-	// TODO: Look into Skeleton's localStorage pub/sub API
 
 	return {
-		...data,
-		user
+		...data
 	}
 }

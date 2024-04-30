@@ -76,7 +76,7 @@
 		const newCustomDays: Array<Day> = []
 		for (const day of uniqueCustomDays) {
 			newCustomDays.push({
-				id: -1 - newCustomDays.length,
+				id: -1,
 				name: day
 			})
 		}
@@ -125,7 +125,7 @@
 		}
 
 		if ($modalStore[0]) {
-			$modalStore[0].response!([...selectedDays, ...customDays])
+			$modalStore[0].response!({ combinedDays: [...selectedDays, ...customDays], confirmed: true })
 		}
 
 		isOpen = false

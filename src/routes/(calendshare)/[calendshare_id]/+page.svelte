@@ -4,18 +4,20 @@
 	import CalendshareTitle from "$lib/calendshare/svelte/components/core/CalendshareTitle.svelte"
 	import CalendshareUsers from "$lib/calendshare/svelte/components/core/CalendshareUsers.svelte"
 	import CalendshareOptions from "$lib/calendshare/svelte/components/core/CalendshareOptions.svelte"
-	import CalendshareShare from "$lib/calendshare/svelte/components/core/CalendshareShare.svelte"
 	import CalendshareSelector from "$lib/calendshare/svelte/components/core/CalendshareSelector.svelte"
-	import JoinCalendshareButton from "$lib/calendshare/svelte/components/core/JoinCalendshareButton.svelte"
+	import JoinOrShareButton from "$lib/calendshare/svelte/components/core/JoinOrShareButton.svelte"
+	import { invalidateAll } from "$app/navigation"
 
 	export let data
 
-	let { calendshare, user, palette } = data
+	invalidateAll()
+
+	let { calendshare, user, supabase } = data
 	$: ({ calendshare, user } = data)
 </script>
 
 <div class="container h-full mx-auto flex justify-center items-center mt-16">
-	<CalendshareState {calendshare} bind:activeUser={user} colors={palette}>
+	<CalendshareState {calendshare} {supabase} activeUser={user}>
 		<div class="flex flex-col">
 			<div class="xl:rotate-y-12 xl:-rotate-x-12">
 				<CalendshareTitle />
@@ -25,11 +27,19 @@
 					<div
 						class="card h-fit p-4 xl:rotate-y-12 xl:-rotate-x-12 w-full xl:w-96 flex flex-col gap-4"
 					>
+						{#if calendshare.visibility === "personal"}
+							<CalendshareUsers />
+						{/if}
 						<Accordion>
-							<AccordionItem open>
-								<svelte:fragment slot="summary">Calendar Users</svelte:fragment>
-								<CalendshareUsers slot="content" />
-							</AccordionItem>
+							{#if calendshare.visibility !== "personal"}
+								<AccordionItem open>
+									<svelte:fragment slot="summary">
+										<span>Calendar Users</span>
+										<span class="code ml-2">{calendshare.records.length}/12</span>
+									</svelte:fragment>
+									<CalendshareUsers slot="content" />
+								</AccordionItem>
+							{/if}
 							{#if calendshare.ownerId == user?.id}
 								<AccordionItem open>
 									<svelte:fragment slot="summary">Calendar Options</svelte:fragment>
@@ -37,13 +47,11 @@
 								</AccordionItem>
 							{/if}
 						</Accordion>
-						<div class="flex gap-2">
-							{#if user}
-								<CalendshareShare />
-							{:else}
-								<JoinCalendshareButton />
-							{/if}
-						</div>
+						{#if calendshare.visibility !== "personal"}
+							<div class="flex gap-2">
+								<JoinOrShareButton />
+							</div>
+						{/if}
 					</div>
 				</div>
 

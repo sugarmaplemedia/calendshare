@@ -1,19 +1,39 @@
-import { users } from "$lib/drizzle/schema.js"
-import { redirect } from "@sveltejs/kit"
+import { fail, redirect } from "@sveltejs/kit"
+import { error } from "console"
 
-export const load = async ({ locals: { getSession, drizzle } }) => {
-	const session = await getSession()
-
-	// Handling redirect/creating user from auth user details
+export const load = async ({ locals: { session }, url }) => {
 	if (session) {
-		const user = await drizzle.query.users.findFirst({
-			where: (users, { eq }) => eq(users.id, session!.user.id)
-		})
+		redirect(303, "/dashboard")
+	}
+}
 
-		if (!user) {
-			await drizzle.insert(users).values({ id: session.user.id, guest: false })
+export const actions = {
+	default: async ({ request, locals: { supabase } }) => {
+		const form = await request.formData()
+		const email = form.get("email") as string
+		const password = form.get("password") as string
+
+		if (!email) {
+			return fail(400, { email, missing: true })
 		}
 
-		redirect(303, "/account")
+		if (!password) {
+			return fail(400, { password, missing: true })
+		}
+
+		const {
+			data: { user },
+			error: supaError
+		} = await supabase.auth.signInWithPassword({ email, password })
+
+		if (!user) {
+			return fail(400, { incorrect: true })
+		}
+
+		if (supaError && supaError.status) {
+			return error(supaError.status, { message: supaError.message })
+		}
+
+		redirect(303, "/dashboard")
 	}
 }

@@ -1,15 +1,13 @@
 <script lang="ts">
 	import { getContext } from "svelte"
-	import type { CalendshareContext } from "./CalendshareState.types"
 	import { RecordEntryStatus, type RecordEntryStatusType } from "$lib/drizzle/schema"
+	import type { Context } from "./CalendshareState.svelte"
+
+	const { currentMode } = getContext<Context>("calendshare:context")
+
+	export let disabled = false
 
 	const modes = RecordEntryStatus.enumValues
-
-	const { currentMode } = getContext<CalendshareContext>("CalendshareContext")
-
-	function setAvailabilityMode(mode: RecordEntryStatusType) {
-		$currentMode = mode
-	}
 </script>
 
 <select
@@ -17,6 +15,7 @@
 	name="availability-mode"
 	class="select w-fit"
 	bind:value={$currentMode}
+	{disabled}
 >
 	{#each modes as mode (mode)}
 		<option value={mode} class="capitalize">

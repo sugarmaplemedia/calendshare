@@ -8,6 +8,9 @@ declare global {
 			supabase: SupabaseClient
 			drizzle: PostgresJsDatabase<typeof schema>
 			getSession(): Promise<Session | null>
+			safeGetSession: () => Promise<{ session: Session | null; user: User | null }>
+			session: Session | null
+			user: User | null
 		}
 		interface PageData {
 			session: Session | null

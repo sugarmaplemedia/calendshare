@@ -17,31 +17,30 @@ export const HoursTemplate = pgEnum("calendshare_hours_template", [
 
 export const calendshares = pgTable("calendshares", {
 	id: uuid("id").defaultRandom().primaryKey(),
-	ownerId: uuid("owner_user_id")
-		.references(() => users.id)
+	ownerId: uuid("ownerId")
+		.references(() => users.id, { onDelete: "cascade", onUpdate: "cascade" })
 		.notNull(),
 	name: text("name").default("A New Calendshare").notNull(),
 	description: text("description").default("").notNull(),
 	visibility: Visibility("visibility").default("public").notNull(),
-	daysTemplate: DaysTemplate("days_template").default("all_week").notNull(),
-	hoursTemplate: HoursTemplate("hours_template").default("business_hours").notNull(),
-	startHour: integer("start_hour"),
-	endHour: integer("end_hour"),
-	timeIncrement: integer("time_increment").default(60).notNull()
+	passPhraseHash: text("passphraseHash"),
+	daysTemplate: DaysTemplate("daysTemplate").default("all_week").notNull(),
+	hoursTemplate: HoursTemplate("hoursTemplate").default("business_hours").notNull(),
+	startHour: integer("startHour").default(6),
+	endHour: integer("endHour").default(12),
+	timeIncrement: integer("timeIncrement").default(60).notNull()
 })
 
-export const calendsharesCustomDays = pgTable(
-	"calendshare_custom_days",
-	{
-		calendshareId: uuid("calendshare_id")
-			.references(() => calendshares.id)
-			.notNull(),
-		dayId: integer("day_id")
-			.references(() => days.id)
-			.notNull()
-	},
-	(table) => ({ pk: primaryKey({ columns: [table.calendshareId, table.dayId] }) })
-)
+export const calendsharesCustomDays = pgTable("calendshare_custom_days", {
+	id: serial("id").primaryKey(),
+	calendshareId: uuid("calendshareId")
+		.references(() => calendshares.id)
+		.notNull(),
+	dayId: integer("dayId")
+		.references(() => days.id)
+		.notNull()
+})
+export type CalendshareCustomDay = typeof calendsharesCustomDays.$inferSelect
 
 export const calendsharesCustomDaysRelations = relations(calendsharesCustomDays, ({ one }) => ({
 	calendshare: one(calendshares, {
@@ -66,6 +65,7 @@ export type CalendshareWithRelations = Calendshare & {
 	days: Array<CalendshareCustomDaysWithRelations>
 	records: Array<RecordsWithRelations>
 }
+export type VisibilityType = typeof calendshares.$inferSelect.visibility
 // TODO: Define this dynamically rather than here, it'll be easier that way
 
 export const days = pgTable("days", {
@@ -80,10 +80,12 @@ export type Day = typeof days.$inferSelect
 
 export const records = pgTable("calendshare_records", {
 	id: serial("id").primaryKey(),
-	calendshareId: uuid("calendshare_id")
+	calendshareId: uuid("calendshareId")
 		.references(() => calendshares.id)
 		.notNull(),
-	userId: uuid("user_id").notNull(),
+	userId: uuid("userId")
+		.references(() => users.id, { onDelete: "cascade", onUpdate: "cascade" })
+		.notNull(),
 	color: text("color").notNull()
 })
 
@@ -118,10 +120,10 @@ export type RecordEntryStatusType = typeof recordEntries.$inferSelect.status
 
 export const recordEntries = pgTable("calendshare_record_entries", {
 	id: serial("id").primaryKey(),
-	recordId: integer("record_id")
+	recordId: integer("recordId")
 		.references(() => records.id, { onDelete: "cascade" })
 		.notNull(),
-	dayId: integer("day_id")
+	dayId: integer("dayId")
 		.references(() => days.id)
 		.notNull(),
 	hour: integer("hour").notNull(), // Number between 0 and 23

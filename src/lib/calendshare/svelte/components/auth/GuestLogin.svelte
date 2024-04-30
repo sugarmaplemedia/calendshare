@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { goto } from "$app/navigation"
 	import type { User } from "$lib/drizzle/schema"
 	import { getModalStore } from "@skeletonlabs/skeleton"
 
@@ -6,6 +7,11 @@
 
 	let firstName = ""
 	let lastName = ""
+	let closeRedirect: string
+
+	$: if ($modalStore[0]) {
+		closeRedirect = $modalStore[0].meta?.closeRedirect
+	}
 
 	async function handleGuestCreation() {
 		const guestRes = await fetch("/api/users/guest", {
@@ -18,18 +24,20 @@
 
 		if (guestRes.ok) {
 			const guestData = (await guestRes.json()) as User
-			localStorage.setItem("guest", JSON.stringify(guestData))
+			sessionStorage.setItem("guest", JSON.stringify(guestData))
 
 			if ($modalStore[0]) {
-				$modalStore[0].response!({ id: guestData.id })
+				$modalStore[0].response!({ guest: guestData })
 			}
 
-			console.log("Created guest account successfully")
 			modalStore.close()
 		}
 	}
 
 	function handleCancel() {
+		if (closeRedirect) {
+			goto(closeRedirect)
+		}
 		modalStore.close()
 	}
 </script>
@@ -39,8 +47,9 @@
 
 	<aside class="alert variant-ghost-warning">
 		<p class="alert-message">
-			<span class="font-bold">Warning: guest accounts are not secure.</span> Anybody with access to this
-			calendar can log in and change your availability.
+			<span class="font-bold">Warning: guest accounts are not secure.</span> Anybody with access to
+			this calendar can log in and change your availability.
+			<a href="/sign-up" class="anchor">Create an account</a> to protect your availability.
 		</p>
 	</aside>
 

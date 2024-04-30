@@ -1,6 +1,4 @@
-export const load = async ({ locals: { getSession } }) => {
-	const session = await getSession()
-
+export const load = async ({ locals: { session } }) => {
 	return {
 		session
 	}

@@ -1,8 +1,10 @@
-<script lang="ts">
-</script>
-
-<h1>Calendshare</h1>
-
-<div class="row flex-center flex">
-	<div class="col-6 form-widget"></div>
+<div class="w-full flex flex-col gap-8 p-4 justify-center items-center h-full">
+	<h1 class="h1-flat">Welcome to Calendshare.</h1>
+	<div class="card p-4 variant-ghost-surface">
+		<p>
+			A web app for planning times with your friends. <a href="/new" class="anchor"
+				>Create one today.</a
+			> For Free, no account.
+		</p>
+	</div>
 </div>

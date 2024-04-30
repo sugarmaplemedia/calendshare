@@ -20,20 +20,14 @@ export async function POST({ locals: { drizzle, getSession }, request }) {
 			error(400, "User not found.")
 		}
 
-		console.log("FOUND GUEST", guest)
-
 		return json(guest)
 	}
 
 	const firstName = data.firstName
 	const lastName = data.lastName
 
-	if (!firstName && !lastName) {
-		error(400, "Please provide a first and last name.")
-	} else if (!firstName || typeof firstName !== "string") {
+	if (!firstName || typeof firstName !== "string") {
 		error(400, "first name of type string is required.")
-	} else if (!lastName || typeof lastName !== "string") {
-		error(400, "last name of type string is required.")
 	}
 
 	const guest = (
