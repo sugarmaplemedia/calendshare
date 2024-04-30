@@ -1,14 +1,21 @@
-import type { User } from "firebase/auth"
+import { SupabaseClient, Session } from "@supabase/supabase-js"
+import { PostgresJsDatabase } from "drizzle-orm/postgres-js"
+import * as schema from "$lib/drizzle/schema"
 
-// See https://kit.svelte.dev/docs/types#app
-// for information about these interfaces
-// and what to do when importing types
-
-declare namespace App {
-	interface Locals {
-		user: UserData
+declare global {
+	namespace App {
+		interface Locals {
+			supabase: SupabaseClient
+			drizzle: PostgresJsDatabase<typeof schema>
+			getSession(): Promise<Session | null>
+			safeGetSession: () => Promise<{ session: Session | null; user: User | null }>
+			session: Session | null
+			user: User | null
+		}
+		interface PageData {
+			session: Session | null
+		}
+		// interface Error {}
+		// interface Platform {}
 	}
-	// interface PageData {}
-	// interface Error {}
-	// interface Platform {}
 }

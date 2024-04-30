@@ -1,0 +1,1 @@
+ALTER TABLE "calendshare_custom_days" DROP CONSTRAINT "calendshare_custom_days_calendshareId_dayId_pk";

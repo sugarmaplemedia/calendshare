@@ -1,0 +1,406 @@
+{
+  "id": "8aa42cea-c02e-4779-90f7-5e94fd5a7ec2",
+  "prevId": "e1d0c279-68c5-4864-b72a-c99fc992c5b5",
+  "version": "5",
+  "dialect": "pg",
+  "tables": {
+    "calendshares": {
+      "name": "calendshares",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "ownerId": {
+          "name": "ownerId",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'A New Calendshare'"
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "''"
+        },
+        "visibility": {
+          "name": "visibility",
+          "type": "calendshare_visibility",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'public'"
+        },
+        "passphraseHash": {
+          "name": "passphraseHash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "daysTemplate": {
+          "name": "daysTemplate",
+          "type": "calendshare_days_template",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'all_week'"
+        },
+        "hoursTemplate": {
+          "name": "hoursTemplate",
+          "type": "calendshare_hours_template",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'business_hours'"
+        },
+        "startHour": {
+          "name": "startHour",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "default": 6
+        },
+        "endHour": {
+          "name": "endHour",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "default": 12
+        },
+        "timeIncrement": {
+          "name": "timeIncrement",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 60
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "calendshares_ownerId_users_id_fk": {
+          "name": "calendshares_ownerId_users_id_fk",
+          "tableFrom": "calendshares",
+          "tableTo": "users",
+          "columnsFrom": [
+            "ownerId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
+    "calendshare_custom_days": {
+      "name": "calendshare_custom_days",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "calendshareId": {
+          "name": "calendshareId",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "dayId": {
+          "name": "dayId",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "calendshare_custom_days_calendshareId_calendshares_id_fk": {
+          "name": "calendshare_custom_days_calendshareId_calendshares_id_fk",
+          "tableFrom": "calendshare_custom_days",
+          "tableTo": "calendshares",
+          "columnsFrom": [
+            "calendshareId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "calendshare_custom_days_dayId_days_id_fk": {
+          "name": "calendshare_custom_days_dayId_days_id_fk",
+          "tableFrom": "calendshare_custom_days",
+          "tableTo": "days",
+          "columnsFrom": [
+            "dayId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
+    "days": {
+      "name": "days",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "days_name_unique": {
+          "name": "days_name_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "name"
+          ]
+        }
+      }
+    },
+    "calendshare_record_entries": {
+      "name": "calendshare_record_entries",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "recordId": {
+          "name": "recordId",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "dayId": {
+          "name": "dayId",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "hour": {
+          "name": "hour",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "minute": {
+          "name": "minute",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "status": {
+          "name": "status",
+          "type": "calendshare_record_entry_status",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "calendshare_record_entries_recordId_calendshare_records_id_fk": {
+          "name": "calendshare_record_entries_recordId_calendshare_records_id_fk",
+          "tableFrom": "calendshare_record_entries",
+          "tableTo": "calendshare_records",
+          "columnsFrom": [
+            "recordId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "calendshare_record_entries_dayId_days_id_fk": {
+          "name": "calendshare_record_entries_dayId_days_id_fk",
+          "tableFrom": "calendshare_record_entries",
+          "tableTo": "days",
+          "columnsFrom": [
+            "dayId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
+    "calendshare_records": {
+      "name": "calendshare_records",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "calendshareId": {
+          "name": "calendshareId",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "userId": {
+          "name": "userId",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "color": {
+          "name": "color",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "calendshare_records_calendshareId_calendshares_id_fk": {
+          "name": "calendshare_records_calendshareId_calendshares_id_fk",
+          "tableFrom": "calendshare_records",
+          "tableTo": "calendshares",
+          "columnsFrom": [
+            "calendshareId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "calendshare_records_userId_users_id_fk": {
+          "name": "calendshare_records_userId_users_id_fk",
+          "tableFrom": "calendshare_records",
+          "tableTo": "users",
+          "columnsFrom": [
+            "userId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
+    "users": {
+      "name": "users",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "firstName": {
+          "name": "firstName",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "''"
+        },
+        "lastName": {
+          "name": "lastName",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "''"
+        },
+        "guest": {
+          "name": "guest",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    }
+  },
+  "enums": {
+    "calendshare_days_template": {
+      "name": "calendshare_days_template",
+      "values": {
+        "business_days": "business_days",
+        "all_week": "all_week",
+        "weekend_only": "weekend_only",
+        "custom": "custom"
+      }
+    },
+    "calendshare_hours_template": {
+      "name": "calendshare_hours_template",
+      "values": {
+        "business_hours": "business_hours",
+        "all_hours": "all_hours",
+        "custom": "custom"
+      }
+    },
+    "calendshare_record_entry_status": {
+      "name": "calendshare_record_entry_status",
+      "values": {
+        "unavailable": "unavailable",
+        "available": "available",
+        "preferred": "preferred"
+      }
+    },
+    "calendshare_visibility": {
+      "name": "calendshare_visibility",
+      "values": {
+        "personal": "personal",
+        "private": "private",
+        "public": "public"
+      }
+    }
+  },
+  "schemas": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}
