@@ -116,7 +116,7 @@
 	<label for="calendar-description" class="label">
 		<p class="w-full text-left text-sm uppercase font-bold">Visibility</p>
 		<div class="flex gap-1">
-			<select class="select">
+			<select class="select" disabled={$user?.guest}>
 				{#each Visibility.enumValues as visibilityMode}
 					<option
 						on:click={() => handleSetVisibility(visibilityMode)}

@@ -221,14 +221,7 @@
 						use:clickOrDrag={() => handleSelect(day, hour)}
 						use:popup={getAvailabilityPopup(`${day.name}:${hour}`)}
 						class="
-                            w-8 sm:w-12 md:w-16 lg:w-20 xl:w-24 [&>*]:pointer-events-none bg-white h-8 flex relative rounded-md overflow-hidden
-                            {tool === 'view' &&
-							(sumOfAvailability.status === 'unavailable'
-								? 'scale-95 brightness-75'
-								: sumOfAvailability.status === 'preferred'
-								  ? 'scale-105 drop-shadow-xl shadow-white/100'
-								  : '')}
-                        "
+                            w-8 sm:w-12 md:w-16 lg:w-20 xl:w-24 [&>*]:pointer-events-none bg-white h-8 flex relative rounded-md overflow-hidden"
 					>
 						{#if tool !== "view"}
 							{#each $recordsStore as record (`${record.userId}:${day.name}:${hour}`)}

@@ -35,7 +35,6 @@
 								<AccordionItem open>
 									<svelte:fragment slot="summary">
 										<span>Calendar Users</span>
-										<span class="code ml-2">{calendshare.records.length}/12</span>
 									</svelte:fragment>
 									<CalendshareUsers slot="content" />
 								</AccordionItem>
