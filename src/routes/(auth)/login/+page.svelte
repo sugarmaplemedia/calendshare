@@ -5,9 +5,9 @@
 	export let form
 </script>
 
-<div class="w-full flex justify-center items-center h-full flex-col gap-8">
+<div class="w-full flex justify-center p-4 items-center h-full flex-col gap-8">
 	<form use:enhance method="post" class="card h-fit p-4 w-full xl:w-96 flex flex-col gap-4">
-		<h2 class="h2">Login</h2>
+		<h2 class="h2-flat">Login</h2>
 
 		{#if $page.status === 400}
 			<div class="card p-2 text-sm variant-ghost-error">

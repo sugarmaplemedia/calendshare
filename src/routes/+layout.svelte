@@ -12,7 +12,9 @@
 		storePopup,
 		type ModalComponent,
 		type ModalSettings,
-		Toast
+		Toast,
+		Drawer,
+		getDrawerStore
 	} from "@skeletonlabs/skeleton"
 	import { computePosition, autoUpdate, flip, shift, offset, arrow } from "@floating-ui/dom"
 	import { ProgressBar } from "@prgm/sveltekit-progress-bar"
@@ -31,6 +33,7 @@
 	storePopup.set({ computePosition, autoUpdate, flip, shift, offset, arrow })
 
 	initializeStores()
+
 	const modalRegistry: Record<string, ModalComponent> = {
 		guestLogin: { ref: GuestLogin },
 		colorPalette: { ref: ColorPaletteModal },
@@ -44,6 +47,8 @@
 		guestChangeName: { ref: GuestChangeNameModal },
 		removeUser: { ref: RemoveUserModal }
 	}
+
+	const drawerStore = getDrawerStore()
 
 	export let data
 
@@ -66,25 +71,71 @@
 			const serializedGuestData = sessionStorage.getItem("guest")
 			guestId = serializedGuestData ? JSON.parse(serializedGuestData).id : undefined
 		}
+
+		drawerStore.close()
+		menuOpen = false
 	})
 
-	const modalStore = getModalStore()
-
-	function handleCreateGuest() {
-		const modal: ModalSettings = {
-			type: "component",
-			component: "guestLogin",
-			response: ({ guest: { id } }) => {
-				goto(`/new?guestId=${id}`)
-			}
+	let menuOpen = false
+	function handleToggleDrawer() {
+		if (menuOpen) {
+			drawerStore.close()
+		} else {
+			drawerStore.open()
 		}
 
-		modalStore.trigger(modal)
+		menuOpen = !menuOpen
 	}
 </script>
 
-<Modal components={modalRegistry} />
 <Toast />
+<Modal components={modalRegistry} />
+<Drawer position="right">
+	<div class="flex flex-col gap-4 p-8 h-full justify-between">
+		<div class="w-full flex justify-between">
+			<div class="flex gap-2 h-fit items-center">
+				<img src="/icon-white.svg" alt="" class="h-6" />
+				<p class="text-2xl uppercase scale-y-90 font-black">Calendshare</p>
+			</div>
+			<button on:click={handleToggleDrawer} class="md:hidden p-1 h-fit btn variant-ghost-surface">
+				<svg xmlns="http://www.w3.org/2000/svg" class="ionicon w-6" viewBox="0 0 512 512"
+					><path
+						fill="none"
+						stroke="currentColor"
+						stroke-linecap="round"
+						stroke-miterlimit="10"
+						stroke-width="32"
+						d="M80 160h352M80 256h352M80 352h352"
+					/></svg
+				>
+			</button>
+		</div>
+		<div class="flex flex-col grow gap-16 text-center justify-center">
+			<p><a href="/" class="h2-flat white underline">Home</a></p>
+			{#if !session}
+				<p><a href="/login" class="h2-flat white underline">Log In</a></p>
+				<p><a href="/sign-up" class="h2-flat white underline">Sign Up</a></p>
+			{:else}
+				<p><a href="/dashboard" class="h2-flat white underline">Dashboard</a></p>
+			{/if}
+		</div>
+		<div class="h-fit">
+			{#if guestId}
+				<a
+					href="/new?guestId={guestId}"
+					data-sveltekit-reload
+					class="btn btn-sm variant-ghost-surface p-6 w-full"
+				>
+					New Calendshare
+				</a>
+			{:else}
+				<a href="/new" data-sveltekit-reload class="btn p-6 w-full variant-ghost-surface">
+					New Calendshare
+				</a>
+			{/if}
+		</div>
+	</div>
+</Drawer>
 
 <svelte:head>
 	<title>Calendshare</title>
@@ -101,6 +152,7 @@
 
 <AppShell>
 	<svelte:fragment slot="header">
+		<ProgressBar class="text-surface-100" />
 		<AppBar>
 			<svelte:fragment slot="lead">
 				<a href="/" class="flex gap-2 items-center">
@@ -109,32 +161,46 @@
 				</a>
 			</svelte:fragment>
 			<svelte:fragment slot="trail">
-				{#if !session}
-					<p class="flex gap-2 scale-y-90 text-lg">
-						<a href="/login" class="font-black text-white hover:underline">Login</a>
-						<span>/</span>
-						<a href="/sign-up" class="font-black text-white hover:underline">Sign Up</a>
-					</p>
-				{:else}
-					<p class="scale-y-90 text-lg">
-						<a href="/dashboard" class="font-black text-white hover:underline">Dashboard</a>
-					</p>
-				{/if}
+				<div class="gap-4 hidden md:flex">
+					{#if !session}
+						<p class="flex gap-2 scale-y-90 text-lg">
+							<a href="/login" class="font-black text-white hover:underline">Login</a>
+							<span>/</span>
+							<a href="/sign-up" class="font-black text-white hover:underline">Sign Up</a>
+						</p>
+					{:else}
+						<p class="scale-y-90 text-lg">
+							<a href="/dashboard" class="font-black text-white hover:underline">Dashboard</a>
+						</p>
+					{/if}
 
-				{#if guestId}
-					<a
-						href="/new?guestId={guestId}"
-						data-sveltekit-reload
-						class="btn btn-sm variant-ghost-surface"
+					{#if guestId}
+						<a
+							href="/new?guestId={guestId}"
+							data-sveltekit-reload
+							class="btn btn-sm variant-ghost-surface"
+						>
+							New Calendshare
+						</a>
+					{:else}
+						<a href="/new" data-sveltekit-reload class="btn btn-sm variant-ghost-surface">
+							New Calendshare
+						</a>
+					{/if}
+				</div>
+
+				<button on:click={handleToggleDrawer} class="md:hidden p-1 btn variant-ghost-surface">
+					<svg xmlns="http://www.w3.org/2000/svg" class="ionicon w-6" viewBox="0 0 512 512"
+						><path
+							fill="none"
+							stroke="currentColor"
+							stroke-linecap="round"
+							stroke-miterlimit="10"
+							stroke-width="32"
+							d="M80 160h352M80 256h352M80 352h352"
+						/></svg
 					>
-						New Calendshare
-					</a>
-				{:else}
-					<a href="/new" data-sveltekit-reload class="btn btn-sm variant-ghost-surface">
-						New Calendshare
-					</a>
-				{/if}
-				<ProgressBar class="text-surface-100" />
+				</button>
 			</svelte:fragment>
 		</AppBar>
 	</svelte:fragment>

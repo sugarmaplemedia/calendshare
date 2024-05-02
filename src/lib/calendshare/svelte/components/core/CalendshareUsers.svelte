@@ -173,6 +173,7 @@
 						>
 					</span>
 				</button>
+
 				{#if !$user.guest && $state.visibility !== "personal"}
 					<button
 						on:click={copyPersonalCalendshare}
@@ -204,6 +205,8 @@
 						</span>
 					</button>
 				{/if}
+
+				<!-- Toggle visibility -->
 				<button
 					on:click={() => $userRecord && handleToggleVisibilityForUser($userRecord.id)}
 					aria-label="toggle user schedule visiblity"

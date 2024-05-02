@@ -4,7 +4,7 @@
 		<p>
 			A web app for planning times with your friends. <a href="/new" class="anchor"
 				>Create one today.</a
-			> For Free, no account.
+			> For free, no account.
 		</p>
 	</div>
 </div>

@@ -49,7 +49,7 @@
 		<p class="alert-message">
 			<span class="font-bold">Warning: guest accounts are not secure.</span> Anybody with access to
 			this calendar can log in and change your availability.
-			<a href="/sign-up" class="anchor">Create an account</a> to protect your availability.
+			<a href="/sign-up" data-sveltekit-reload class="anchor">Create an account</a> to protect your availability.
 		</p>
 	</aside>
 
@@ -64,6 +64,6 @@
 
 	<div class="grid grid-cols-2 gap-2 mt-2">
 		<button type="button" on:click={handleCancel} class="btn variant-ghost-error">Cancel</button>
-		<button type="submit" class="btn variant-ghost"> Log in as guest </button>
+		<button type="submit" class="btn variant-ghost"> Login </button>
 	</div>
 </form>

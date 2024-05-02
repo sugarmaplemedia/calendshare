@@ -16,7 +16,7 @@
 	export let form
 </script>
 
-<div class="w-full flex justify-center items-center flex-col gap-8 h-full">
+<div class="w-full flex justify-center items-center flex-col gap-8 h-full p-4">
 	{#if form?.success && form?.sentTo}
 		<aside class="alert variant-ghost-warning">
 			<p class="alert-message">
@@ -27,7 +27,7 @@
 	{/if}
 
 	<form use:enhance method="post" class="card h-fit p-4 w-full max-w-sm flex flex-col gap-4">
-		<h2 class="h2">Sign Up</h2>
+		<h2 class="h2-flat">Sign Up</h2>
 
 		{#if guestData}
 			<div class="card p-4 variant-ghost-primary">
