@@ -22,7 +22,7 @@
 			<div class="xl:rotate-y-12 xl:-rotate-x-12">
 				<CalendshareTitle />
 			</div>
-			<div class="text-center flex flex-col xl:flex-row gap-8 xl:gap-4">
+			<div class="text-center flex flex-col xl:flex-row justify-center w-full gap-8 xl:gap-4">
 				<div class="flex flex-col gap-4">
 					<div
 						class="card h-fit p-4 xl:rotate-y-12 xl:-rotate-x-12 w-full xl:w-96 flex flex-col gap-4"
