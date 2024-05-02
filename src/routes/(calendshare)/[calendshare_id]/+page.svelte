@@ -16,9 +16,9 @@
 	$: ({ calendshare, user } = data)
 </script>
 
-<div class="container h-full mx-auto flex justify-center items-center mt-16">
+<div class="container h-full mx-auto flex justify-center items-center mt-16 p-4 w-full">
 	<CalendshareState {calendshare} {supabase} activeUser={user}>
-		<div class="flex flex-col">
+		<div class="flex flex-col w-full">
 			<div class="xl:rotate-y-12 xl:-rotate-x-12">
 				<CalendshareTitle />
 			</div>

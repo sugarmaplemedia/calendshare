@@ -13,7 +13,7 @@
 <select
 	id="availability-mode"
 	name="availability-mode"
-	class="select w-fit"
+	class="select w-full md:w-fit"
 	bind:value={$currentMode}
 	{disabled}
 >

@@ -127,7 +127,7 @@
 						on:click={handleChangeName}
 						aria-label="toggle user schedule visiblity"
 						class="btn variant-filled-surface w-fit px-2 py-2"
-						title="Change color"
+						title="Change name"
 					>
 						<span class="w-6 h-6 fill-primary-50">
 							<svg xmlns="http://www.w3.org/2000/svg" class="ionicon w-6" viewBox="0 0 512 512"

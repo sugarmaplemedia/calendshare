@@ -210,248 +210,253 @@
 			</div>
 		{/each}
 	</div>
-	{#each $daysToDisplay as day (day.name)}
-		<div class="flex flex-col gap-2 items-center">
-			<p>{day.name.slice(0, 3)}</p>
-			<div class="grid gap-2">
-				{#each $hoursToDisplay as hour (`${day.name}:${hour}`)}
-					{@const sumOfAvailability = getSumOfAvailability(day, hour)}
+	<div class="grid grid-flow-col gap-2 overflow-x-auto">
+		{#each $daysToDisplay as day (day.name)}
+			<div class="flex flex-col gap-2 items-center">
+				<p>{day.name.slice(0, 3)}</p>
+				<div class="grid gap-2">
+					{#each $hoursToDisplay as hour (`${day.name}:${hour}`)}
+						{@const sumOfAvailability = getSumOfAvailability(day, hour)}
 
-					<button
-						use:clickOrDrag={() => handleSelect(day, hour)}
-						use:popup={getAvailabilityPopup(`${day.name}:${hour}`)}
-						class="
+						<button
+							use:clickOrDrag={() => handleSelect(day, hour)}
+							use:popup={getAvailabilityPopup(`${day.name}:${hour}`)}
+							class="
                             w-8 sm:w-12 md:w-16 lg:w-20 xl:w-24 [&>*]:pointer-events-none bg-white h-8 flex relative rounded-md overflow-hidden"
-					>
-						{#if tool !== "view"}
-							{#each $recordsStore as record (`${record.userId}:${day.name}:${hour}`)}
-								{@const entry = $recordEntriesStore.find(
-									(entry) =>
-										entry.recordId === record.id && entry.dayId === day.id && entry.hour === hour
-								)}
-								{#if entry}
-									<span
-										transition:fade={{ duration: 100 }}
-										style={`background-color: ${record.color};`}
-										class="
+						>
+							{#if tool !== "view"}
+								{#each $recordsStore as record (`${record.userId}:${day.name}:${hour}`)}
+									{@const entry = $recordEntriesStore.find(
+										(entry) =>
+											entry.recordId === record.id && entry.dayId === day.id && entry.hour === hour
+									)}
+									{#if entry}
+										<span
+											transition:fade={{ duration: 100 }}
+											style={`background-color: ${record.color};`}
+											class="
                                         flex items-center justify-center w-full h-full flex-grow top-0 transition-all origin-left
                                         {!$invisibleRecords.includes(record.id)
-											? 'scale-x-100'
-											: 'scale-x-0'}
+												? 'scale-x-100'
+												: 'scale-x-0'}
                                     "
-									>
-										{#if entry.status === "available"}
-											<svg
-												xmlns="http://www.w3.org/2000/svg"
-												class="ionicon max-w-[1.5rem]"
-												viewBox="0 0 512 512"
-												><path
-													d="M448 256c0-106-86-192-192-192S64 150 64 256s86 192 192 192 192-86 192-192z"
-													fill="none"
-													stroke="currentColor"
-													stroke-miterlimit="10"
-													stroke-width="32"
-												/><path
-													fill="none"
-													stroke="currentColor"
-													stroke-linecap="round"
-													stroke-linejoin="round"
-													stroke-width="32"
-													d="M352 176L217.6 336 160 272"
-												/></svg
-											>
-										{:else if entry.status === "preferred"}
-											<svg
-												xmlns="http://www.w3.org/2000/svg"
-												class="ionicon max-w-[1.5rem]"
-												viewBox="0 0 512 512"
-												><path
-													d="M448 256c0-106-86-192-192-192S64 150 64 256s86 192 192 192 192-86 192-192z"
-													fill="none"
-													stroke="currentColor"
-													stroke-miterlimit="10"
-													stroke-width="32"
-												/><path
-													fill="none"
-													stroke="currentColor"
-													stroke-linecap="round"
-													stroke-linejoin="round"
-													stroke-width="32"
-													d="M368 192L256.13 320l-47.95-48M191.95 320L144 272M305.71 192l-51.55 59"
-												/></svg
-											>
-										{:else}
-											<svg
-												xmlns="http://www.w3.org/2000/svg"
-												class="ionicon max-w-[1.5rem]"
-												viewBox="0 0 512 512"
-												><path
-													d="M448 256c0-106-86-192-192-192S64 150 64 256s86 192 192 192 192-86 192-192z"
-													fill="none"
-													stroke="currentColor"
-													stroke-miterlimit="10"
-													stroke-width="32"
-												/><path
-													fill="none"
-													stroke="currentColor"
-													stroke-linecap="round"
-													stroke-linejoin="round"
-													stroke-width="32"
-													d="M320 320L192 192M192 320l128-128"
-												/></svg
-											>
-										{/if}
-									</span>
-								{/if}
-							{/each}
-						{:else if sumOfAvailability.status === "available"}
-							<span
-								transition:fade={{ duration: 100 }}
-								class="flex items-center justify-center w-full h-full flex-grow top-0 transition-all origin-left {sumOfAvailability.classes}"
-							>
-								<svg xmlns="http://www.w3.org/2000/svg" class="ionicon w-6" viewBox="0 0 512 512"
-									><path
-										d="M448 256c0-106-86-192-192-192S64 150 64 256s86 192 192 192 192-86 192-192z"
-										fill="none"
-										stroke="currentColor"
-										stroke-miterlimit="10"
-										stroke-width="32"
-									/><path
-										fill="none"
-										stroke="currentColor"
-										stroke-linecap="round"
-										stroke-linejoin="round"
-										stroke-width="32"
-										d="M352 176L217.6 336 160 272"
-									/></svg
+										>
+											{#if entry.status === "available"}
+												<svg
+													xmlns="http://www.w3.org/2000/svg"
+													class="ionicon max-w-[1.5rem]"
+													viewBox="0 0 512 512"
+													><path
+														d="M448 256c0-106-86-192-192-192S64 150 64 256s86 192 192 192 192-86 192-192z"
+														fill="none"
+														stroke="currentColor"
+														stroke-miterlimit="10"
+														stroke-width="32"
+													/><path
+														fill="none"
+														stroke="currentColor"
+														stroke-linecap="round"
+														stroke-linejoin="round"
+														stroke-width="32"
+														d="M352 176L217.6 336 160 272"
+													/></svg
+												>
+											{:else if entry.status === "preferred"}
+												<svg
+													xmlns="http://www.w3.org/2000/svg"
+													class="ionicon max-w-[1.5rem]"
+													viewBox="0 0 512 512"
+													><path
+														d="M448 256c0-106-86-192-192-192S64 150 64 256s86 192 192 192 192-86 192-192z"
+														fill="none"
+														stroke="currentColor"
+														stroke-miterlimit="10"
+														stroke-width="32"
+													/><path
+														fill="none"
+														stroke="currentColor"
+														stroke-linecap="round"
+														stroke-linejoin="round"
+														stroke-width="32"
+														d="M368 192L256.13 320l-47.95-48M191.95 320L144 272M305.71 192l-51.55 59"
+													/></svg
+												>
+											{:else}
+												<svg
+													xmlns="http://www.w3.org/2000/svg"
+													class="ionicon max-w-[1.5rem]"
+													viewBox="0 0 512 512"
+													><path
+														d="M448 256c0-106-86-192-192-192S64 150 64 256s86 192 192 192 192-86 192-192z"
+														fill="none"
+														stroke="currentColor"
+														stroke-miterlimit="10"
+														stroke-width="32"
+													/><path
+														fill="none"
+														stroke="currentColor"
+														stroke-linecap="round"
+														stroke-linejoin="round"
+														stroke-width="32"
+														d="M320 320L192 192M192 320l128-128"
+													/></svg
+												>
+											{/if}
+										</span>
+									{/if}
+								{/each}
+							{:else if sumOfAvailability.status === "available"}
+								<span
+									transition:fade={{ duration: 100 }}
+									class="flex items-center justify-center w-full h-full flex-grow top-0 transition-all origin-left {sumOfAvailability.classes}"
 								>
-							</span>
-						{:else if sumOfAvailability.status === "preferred"}
-							<span
-								transition:fade={{ duration: 100 }}
-								class="flex items-center justify-center w-full h-full flex-grow top-0 transition-all origin-left {sumOfAvailability.classes}"
-							>
-								<svg xmlns="http://www.w3.org/2000/svg" class="ionicon w-6" viewBox="0 0 512 512"
-									><path
-										d="M448 256c0-106-86-192-192-192S64 150 64 256s86 192 192 192 192-86 192-192z"
-										fill="none"
-										stroke="currentColor"
-										stroke-miterlimit="10"
-										stroke-width="32"
-									/><path
-										fill="none"
-										stroke="currentColor"
-										stroke-linecap="round"
-										stroke-linejoin="round"
-										stroke-width="32"
-										d="M368 192L256.13 320l-47.95-48M191.95 320L144 272M305.71 192l-51.55 59"
-									/></svg
-								>
-							</span>
-						{:else if sumOfAvailability.status === "mixed"}
-							<span
-								transition:fade={{ duration: 100 }}
-								class="flex items-center justify-center w-full h-full flex-grow top-0 transition-all origin-left {sumOfAvailability.classes}"
-							>
-								<svg
-									xmlns="http://www.w3.org/2000/svg"
-									class="ionicon w-6 fill-white"
-									viewBox="0 0 512 512"
-									><circle cx="256" cy="256" r="26" /><circle cx="346" cy="256" r="26" /><circle
-										cx="166"
-										cy="256"
-										r="26"
-									/><path
-										d="M448 256c0-106-86-192-192-192S64 150 64 256s86 192 192 192 192-86 192-192z"
-										fill="none"
-										stroke="currentColor"
-										stroke-miterlimit="10"
-										stroke-width="32"
-									/></svg
-								>
-							</span>
-						{:else}
-							<span
-								transition:fade={{ duration: 100 }}
-								class="flex items-center justify-center w-full h-full flex-grow top-0 transition-all origin-left {sumOfAvailability.classes}"
-							>
-								<svg xmlns="http://www.w3.org/2000/svg" class="ionicon w-6" viewBox="0 0 512 512"
-									><path
-										d="M448 256c0-106-86-192-192-192S64 150 64 256s86 192 192 192 192-86 192-192z"
-										fill="none"
-										stroke="currentColor"
-										stroke-miterlimit="10"
-										stroke-width="32"
-									/><path
-										fill="none"
-										stroke="currentColor"
-										stroke-linecap="round"
-										stroke-linejoin="round"
-										stroke-width="32"
-										d="M320 320L192 192M192 320l128-128"
-									/></svg
-								>
-							</span>
-						{/if}
-					</button>
-
-					<div
-						class="card z-10 w-64 p-4 variant-filled-tertiary text-lg rounded-lg {tool != 'view' &&
-							'invisible pointer-events-none'}"
-						data-popup="popup-{`${day.name}:${hour}`}"
-					>
-						<div class="flex flex-col gap-2">
-							<h3 class="text-left font-bold">
-								{`${day.name[0].toUpperCase()}${day.name.slice(1)}`} at {hourNumberToString(hour, {
-									militaryTime: false
-								})}
-							</h3>
-							{#if viewingEntries}
-								{#if !viewingEntries.some((viewingEntry) => viewingEntry.status === "unavailable")}
-									<div
-										class="card border-2 border-primary-200 rounded-md text-sm variant-filled-success p-2 text-left"
+									<svg xmlns="http://www.w3.org/2000/svg" class="ionicon w-6" viewBox="0 0 512 512"
+										><path
+											d="M448 256c0-106-86-192-192-192S64 150 64 256s86 192 192 192 192-86 192-192z"
+											fill="none"
+											stroke="currentColor"
+											stroke-miterlimit="10"
+											stroke-width="32"
+										/><path
+											fill="none"
+											stroke="currentColor"
+											stroke-linecap="round"
+											stroke-linejoin="round"
+											stroke-width="32"
+											d="M352 176L217.6 336 160 272"
+										/></svg
 									>
-										<p class="font-bold uppercase">All Available!</p>
-									</div>
-								{:else if !viewingEntries.some((viewingEntry) => viewingEntry.status === "available" || viewingEntry.status === "preferred")}
-									<div
-										class="card border-2 border-primary-200 rounded-md text-sm variant-filled-error p-2 text-left"
+								</span>
+							{:else if sumOfAvailability.status === "preferred"}
+								<span
+									transition:fade={{ duration: 100 }}
+									class="flex items-center justify-center w-full h-full flex-grow top-0 transition-all origin-left {sumOfAvailability.classes}"
+								>
+									<svg xmlns="http://www.w3.org/2000/svg" class="ionicon w-6" viewBox="0 0 512 512"
+										><path
+											d="M448 256c0-106-86-192-192-192S64 150 64 256s86 192 192 192 192-86 192-192z"
+											fill="none"
+											stroke="currentColor"
+											stroke-miterlimit="10"
+											stroke-width="32"
+										/><path
+											fill="none"
+											stroke="currentColor"
+											stroke-linecap="round"
+											stroke-linejoin="round"
+											stroke-width="32"
+											d="M368 192L256.13 320l-47.95-48M191.95 320L144 272M305.71 192l-51.55 59"
+										/></svg
 									>
-										<p class="font-bold uppercase">None Available</p>
-									</div>
-								{:else}
-									<div
-										class="card border-2 border-primary-200 rounded-md text-sm variant-filled-primary p-2 text-left"
+								</span>
+							{:else if sumOfAvailability.status === "mixed"}
+								<span
+									transition:fade={{ duration: 100 }}
+									class="flex items-center justify-center w-full h-full flex-grow top-0 transition-all origin-left {sumOfAvailability.classes}"
+								>
+									<svg
+										xmlns="http://www.w3.org/2000/svg"
+										class="ionicon w-6 fill-white"
+										viewBox="0 0 512 512"
+										><circle cx="256" cy="256" r="26" /><circle cx="346" cy="256" r="26" /><circle
+											cx="166"
+											cy="256"
+											r="26"
+										/><path
+											d="M448 256c0-106-86-192-192-192S64 150 64 256s86 192 192 192 192-86 192-192z"
+											fill="none"
+											stroke="currentColor"
+											stroke-miterlimit="10"
+											stroke-width="32"
+										/></svg
 									>
-										<p class="font-bold uppercase">Available</p>
-										<ul class="list-disc ml-4">
-											{#each viewingEntries.filter((viewingEntry) => viewingEntry.status !== "unavailable") as { record: { id, user: { firstName, lastName } } } (id)}
-												<li>{firstName} {lastName}</li>
-											{/each}
-										</ul>
-										<p class="font-bold uppercase">Unavailable</p>
-										<ul class="list-disc ml-4">
-											{#each viewingEntries.filter((viewingEntry) => viewingEntry.status === "unavailable") as { record: { id, user: { firstName, lastName } } } (id)}
-												<li>{firstName} {lastName}</li>
-											{/each}
-										</ul>
-									</div>
-								{/if}
+								</span>
+							{:else}
+								<span
+									transition:fade={{ duration: 100 }}
+									class="flex items-center justify-center w-full h-full flex-grow top-0 transition-all origin-left {sumOfAvailability.classes}"
+								>
+									<svg xmlns="http://www.w3.org/2000/svg" class="ionicon w-6" viewBox="0 0 512 512"
+										><path
+											d="M448 256c0-106-86-192-192-192S64 150 64 256s86 192 192 192 192-86 192-192z"
+											fill="none"
+											stroke="currentColor"
+											stroke-miterlimit="10"
+											stroke-width="32"
+										/><path
+											fill="none"
+											stroke="currentColor"
+											stroke-linecap="round"
+											stroke-linejoin="round"
+											stroke-width="32"
+											d="M320 320L192 192M192 320l128-128"
+										/></svg
+									>
+								</span>
 							{/if}
+						</button>
+
+						<div
+							class="card z-10 w-64 p-4 variant-filled-tertiary text-lg rounded-lg {tool !=
+								'view' && 'invisible pointer-events-none'}"
+							data-popup="popup-{`${day.name}:${hour}`}"
+						>
+							<div class="flex flex-col gap-2">
+								<h3 class="text-left font-bold">
+									{`${day.name[0].toUpperCase()}${day.name.slice(1)}`} at {hourNumberToString(
+										hour,
+										{
+											militaryTime: false
+										}
+									)}
+								</h3>
+								{#if viewingEntries}
+									{#if !viewingEntries.some((viewingEntry) => viewingEntry.status === "unavailable")}
+										<div
+											class="card border-2 border-primary-200 rounded-md text-sm variant-filled-success p-2 text-left"
+										>
+											<p class="font-bold uppercase">All Available!</p>
+										</div>
+									{:else if !viewingEntries.some((viewingEntry) => viewingEntry.status === "available" || viewingEntry.status === "preferred")}
+										<div
+											class="card border-2 border-primary-200 rounded-md text-sm variant-filled-error p-2 text-left"
+										>
+											<p class="font-bold uppercase">None Available</p>
+										</div>
+									{:else}
+										<div
+											class="card border-2 border-primary-200 rounded-md text-sm variant-filled-primary p-2 text-left"
+										>
+											<p class="font-bold uppercase">Available</p>
+											<ul class="list-disc ml-4">
+												{#each viewingEntries.filter((viewingEntry) => viewingEntry.status !== "unavailable") as { record: { id, user: { firstName, lastName } } } (id)}
+													<li>{firstName} {lastName}</li>
+												{/each}
+											</ul>
+											<p class="font-bold uppercase">Unavailable</p>
+											<ul class="list-disc ml-4">
+												{#each viewingEntries.filter((viewingEntry) => viewingEntry.status === "unavailable") as { record: { id, user: { firstName, lastName } } } (id)}
+													<li>{firstName} {lastName}</li>
+												{/each}
+											</ul>
+										</div>
+									{/if}
+								{/if}
+							</div>
+							<div class="arrow bg-tertiary-500"></div>
 						</div>
-						<div class="arrow bg-tertiary-500"></div>
-					</div>
-				{/each}
+					{/each}
+				</div>
 			</div>
-		</div>
-	{/each}
+		{/each}
+	</div>
 </div>
 
-<div class="mt-2 w-full flex gap-2">
+<div class="mt-2 w-full flex flex-col md:flex-row gap-2">
 	<div class="grow flex">
 		<button
 			on:click={() => (tool = "view")}
-			class="btn py-2 px-4 w-fit {tool == 'view' ? 'variant-filled' : ' variant-ghost'}"
+			class="btn py-2 px-4 w-full md:w-fit {tool == 'view' ? 'variant-filled' : ' variant-ghost'}"
 		>
 			<span class="w-4 h-4 {tool == 'view' ? 'fill-surface-900' : 'fill-primary-500'}">
 				<svg xmlns="http://www.w3.org/2000/svg" class="ionicon" viewBox="0 0 512 512"
@@ -479,65 +484,67 @@
 
 	<CalendshareAvailabilityMode disabled={!$userRecord} />
 
-	<button
-		on:click={() => (tool = "toggle")}
-		disabled={!$userRecord}
-		class="btn py-2 px-4 {tool == 'toggle' ? 'variant-filled' : ' variant-ghost'}"
-	>
-		<span class="w-4 h-4 {tool == 'toggle' ? 'fill-surface-900' : 'fill-primary-50'}">
-			<svg xmlns="http://www.w3.org/2000/svg" class="ionicon" viewBox="0 0 512 512"
-				><path
-					d="M384 224v184a40 40 0 01-40 40H104a40 40 0 01-40-40V168a40 40 0 0140-40h167.48"
-					fill="none"
-					stroke="currentColor"
-					stroke-linecap="round"
-					stroke-linejoin="round"
-					stroke-width="32"
-				/><path
-					d="M459.94 53.25a16.06 16.06 0 00-23.22-.56L424.35 65a8 8 0 000 11.31l11.34 11.32a8 8 0 0011.34 0l12.06-12c6.1-6.09 6.67-16.01.85-22.38zM399.34 90L218.82 270.2a9 9 0 00-2.31 3.93L208.16 299a3.91 3.91 0 004.86 4.86l24.85-8.35a9 9 0 003.93-2.31L422 112.66a9 9 0 000-12.66l-9.95-10a9 9 0 00-12.71 0z"
-				/></svg
-			>
-		</span>
-		<span>Toggle</span>
-	</button>
+	<div class="grid grid-flow-col gap-1">
+		<button
+			on:click={() => (tool = "toggle")}
+			disabled={!$userRecord}
+			class="btn py-2 px-4 {tool == 'toggle' ? 'variant-filled' : ' variant-ghost'}"
+		>
+			<span class="w-4 h-4 {tool == 'toggle' ? 'fill-surface-900' : 'fill-primary-50'}">
+				<svg xmlns="http://www.w3.org/2000/svg" class="ionicon" viewBox="0 0 512 512"
+					><path
+						d="M384 224v184a40 40 0 01-40 40H104a40 40 0 01-40-40V168a40 40 0 0140-40h167.48"
+						fill="none"
+						stroke="currentColor"
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						stroke-width="32"
+					/><path
+						d="M459.94 53.25a16.06 16.06 0 00-23.22-.56L424.35 65a8 8 0 000 11.31l11.34 11.32a8 8 0 0011.34 0l12.06-12c6.1-6.09 6.67-16.01.85-22.38zM399.34 90L218.82 270.2a9 9 0 00-2.31 3.93L208.16 299a3.91 3.91 0 004.86 4.86l24.85-8.35a9 9 0 003.93-2.31L422 112.66a9 9 0 000-12.66l-9.95-10a9 9 0 00-12.71 0z"
+					/></svg
+				>
+			</span>
+			<span>Toggle</span>
+		</button>
 
-	<button
-		on:click={() => (tool = "add")}
-		disabled={!$userRecord}
-		class="btn py-2 px-4 {tool == 'add' ? 'variant-filled' : ' variant-ghost-success'}"
-	>
-		<span class="w-4 h-4 {tool == 'add' ? 'fill-surface-900' : 'fill-primary-500'}">
-			<svg xmlns="http://www.w3.org/2000/svg" class="ionicon" viewBox="0 0 512 512"
-				><path
-					fill="none"
-					stroke="currentColor"
-					stroke-linecap="round"
-					stroke-linejoin="round"
-					stroke-width="32"
-					d="M256 112v288M400 256H112"
-				/></svg
-			>
-		</span>
-		<span>Add</span>
-	</button>
+		<button
+			on:click={() => (tool = "add")}
+			disabled={!$userRecord}
+			class="btn py-2 px-4 {tool == 'add' ? 'variant-filled' : ' variant-ghost-success'}"
+		>
+			<span class="w-4 h-4 {tool == 'add' ? 'fill-surface-900' : 'fill-primary-500'}">
+				<svg xmlns="http://www.w3.org/2000/svg" class="ionicon" viewBox="0 0 512 512"
+					><path
+						fill="none"
+						stroke="currentColor"
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						stroke-width="32"
+						d="M256 112v288M400 256H112"
+					/></svg
+				>
+			</span>
+			<span>Add</span>
+		</button>
 
-	<button
-		on:click={() => (tool = "remove")}
-		disabled={!$userRecord}
-		class="btn py-2 px-4 {tool == 'remove' ? 'variant-filled' : ' variant-ghost-error'}"
-	>
-		<span class="w-4 h-4 {tool == 'remove' ? 'fill-surface-900' : 'fill-primary-500'}">
-			<svg xmlns="http://www.w3.org/2000/svg" class="ionicon" viewBox="0 0 512 512">
-				<path
-					fill="none"
-					stroke="currentColor"
-					stroke-linecap="round"
-					stroke-linejoin="round"
-					stroke-width="32"
-					d="M368 368L144 144M368 144L144 368"
-				/>
-			</svg>
-		</span>
-		<span>Remove</span>
-	</button>
+		<button
+			on:click={() => (tool = "remove")}
+			disabled={!$userRecord}
+			class="btn py-2 px-4 {tool == 'remove' ? 'variant-filled' : ' variant-ghost-error'}"
+		>
+			<span class="w-4 h-4 {tool == 'remove' ? 'fill-surface-900' : 'fill-primary-500'}">
+				<svg xmlns="http://www.w3.org/2000/svg" class="ionicon" viewBox="0 0 512 512">
+					<path
+						fill="none"
+						stroke="currentColor"
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						stroke-width="32"
+						d="M368 368L144 144M368 144L144 368"
+					/>
+				</svg>
+			</span>
+			<span>Remove</span>
+		</button>
+	</div>
 </div>

@@ -24,8 +24,10 @@
 		</p>
 	</div>
 
-	<div class="grid grid-cols-2 gap-2 mt-2">
+	<div class="grid grid-flow-col gap-2 mt-2">
 		<button on:click={handleCancel} class="btn variant-ghost-surface">Go back</button>
-		<button on:click={handleCreateAccount} class="btn variant-ghost-primary">Create account</button>
+		<button on:click={handleCreateAccount} class="btn p-2 variant-ghost-primary w-fit">
+			Create account
+		</button>
 	</div>
 </div>

@@ -185,7 +185,7 @@
 		</form>
 
 		<div class="flex flex-col gap-8 card variant-ghost-surface p-4 md:col-span-2 h-fit">
-			<div class="flex justify-between">
+			<div class="flex justify-between md:flex-row flex-col gap-1">
 				<h2 class="h2-flat">All Calendshares</h2>
 				<a href="/new" class="btn variant-ghost-primary">New Calendshare</a>
 			</div>
